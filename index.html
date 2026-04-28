@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WA Sender V4 Pro Final - Amhosrcp AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; overflow-x: hidden; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .input-field { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
+        .input-field:focus { border-color: #22c55e; outline: none; box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2); }
+        .btn-primary { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); transition: all 0.2s; }
+        .btn-primary:hover { transform: translateY(-1px); }
+        #previewImg, #previewVideo { max-width: 100%; border-radius: 12px; display: none; margin-top: 1rem; border: 2px solid rgba(255, 255, 255, 0.1); }
+        .hidden-section { display: none !important; }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+    </style>
+</head>
+<body>
+
+    <!-- ================= HALAMAN LOGIN ================= -->
+    <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-card p-8 rounded-3xl w-full max-w-md shadow-2xl">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-lock text-4xl text-green-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold">Secure Access</h2>
+                <p class="text-slate-400 text-sm">Dashboard Logistik Amhosrcp AI</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-2 block">Username</label>
+                    <input type="text" id="username" class="input-field w-full p-4 rounded-2xl text-sm" placeholder="Admin">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-2 block">Password</label>
+                    <input type="password" id="password" class="input-field w-full p-4 rounded-2xl text-sm" placeholder="••••••">
+                </div>
+                <button onclick="handleLogin()" class="btn-primary w-full py-4 rounded-2xl font-bold text-lg shadow-lg mt-2">
+                    LOGIN
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= DASHBOARD UTAMA ================= -->
+    <div id="mainDashboard" class="hidden-section min-h-screen p-4 md:p-8">
+        <div class="max-w-6xl mx-auto">
+            <header class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+                        WA Sender V4 Pro
+                    </h1>
+                    <p class="text-slate-400 text-xs mt-1">Sistem Pengiriman Pesan & Database Kontak</p>
+                </div>
+                <button onclick="handleLogout()" class="bg-red-500/10 hover:bg-red-500/20 px-6 py-3 rounded-2xl text-[10px] font-bold text-red-400 transition-colors border border-red-500/20">
+                    LOGOUT SYSTEM
+                </button>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Samping: Manajemen Kontak -->
+                <aside class="lg:col-span-4 space-y-6">
+                    <div class="glass-card p-6 rounded-3xl">
+                        <h2 class="text-lg font-bold mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-users text-green-400"></i> Kelola Kontak
+                        </h2>
+                        
+                        <div class="space-y-4">
+                            <div class="flex gap-2">
+                                <select id="kontakSelect" onchange="isiNomor()" class="input-field flex-grow p-4 rounded-2xl text-xs">
+                                    <option value="">-- Pilih Kontak --</option>
+                                </select>
+                                <button onclick="hapusSatuKontak()" class="btn-danger p-4 rounded-2xl flex items-center justify-center transition-all" title="Hapus Kontak Terpilih">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+
+                            <div class="pt-4 border-t border-white/5 space-y-3">
+                                <input type="text" id="namaKontak" placeholder="Nama Baru" class="input-field w-full p-4 rounded-2xl text-xs">
+                                <input type="text" id="nomorKontak" placeholder="628..." class="input-field w-full p-4 rounded-2xl text-xs">
+                                <button onclick="tambahKontak()" class="btn-primary w-full py-4 rounded-2xl font-bold text-xs">
+                                    Simpan Kontak
+                                </button>
+                            </div>
+
+                            <div class="pt-6 border-t border-white/5">
+                                <input type="file" id="csvFile" accept=".csv" class="hidden">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="document.getElementById('csvFile').click()" class="bg-white/5 py-3 rounded-xl text-[9px] font-bold uppercase">Pilih CSV</button>
+                                    <button onclick="importCSV()" class="bg-white/5 py-3 rounded-xl text-[9px] font-bold uppercase">Import</button>
+                                </div>
+                                <button onclick="hapusSemuaKontak()" class="w-full mt-3 py-2 text-[9px] text-red-400/50 hover:text-red-400 uppercase font-bold tracking-tighter">
+                                    Hapus Semua Database
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Utama: Komposisi Pesan -->
+                <main class="lg:col-span-8 space-y-6">
+                    <div class="glass-card p-8 rounded-3xl shadow-2xl">
+                        <div class="space-y-5">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Nomor Tujuan</label>
+                                <input type="text" id="nomor" placeholder="628..." class="input-field w-full p-4 rounded-2xl font-mono text-green-400">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Pesan (Gunakan {{nama}})</label>
+                                <textarea id="pesan" rows="5" placeholder="Halo {{nama}}..." class="input-field w-full p-5 rounded-2xl resize-none text-sm"></textarea>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Media (Gambar/Video)</label>
+                                <input type="file" id="file" accept="image/*,video/*" class="input-field w-full p-3 rounded-2xl text-[10px]">
+                                <img id="previewImg">
+                                <video id="previewVideo" controls></video>
+                            </div>
+                            <div id="status" class="text-center text-[11px] font-medium min-h-[20px]"></div>
+                            <button id="btnKirim" onclick="kirim()" class="btn-primary w-full py-5 rounded-3xl font-black text-lg tracking-widest shadow-2xl shadow-green-500/20">
+                                KIRIM PESAN & LINK
+                            </button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CLOUD_NAME = "dkisbfx29";
+        const UPLOAD_PRESET = "ml_default";
+        const API_KEY_FONNTE = "hMYEWfgYSGSw6KK81TN6";
+
+        // ================= AUTH SYSTEM =================
+        function checkAuth() {
+            const isLogin = localStorage.getItem("login");
+            if (isLogin === "true") {
+                document.getElementById("loginPage").classList.add("hidden-section");
+                document.getElementById("mainDashboard").classList.remove("hidden-section");
+                renderKontak();
+            } else {
+                document.getElementById("loginPage").classList.remove("hidden-section");
+                document.getElementById("mainDashboard").classList.add("hidden-section");
+            }
+        }
+
+        function handleLogin() {
+            const u = document.getElementById("username").value.trim();
+            const p = document.getElementById("password").value.trim();
+            if (u === "admin" && p === "101312") {
+                localStorage.setItem("login", "true");
+                checkAuth();
+            } else {
+                alert("Akses Ditolak! Periksa kembali kredensial Anda.");
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem("login");
+            checkAuth();
+        }
+
+        // ================= CONTACT SYSTEM =================
+        let kontak = JSON.parse(localStorage.getItem("kontak")) || [];
+
+        function renderKontak() {
+            const select = document.getElementById("kontakSelect");
+            if (!select) return;
+            select.innerHTML = `<option value="">-- Pilih Kontak --</option>`;
+            kontak.forEach((k, i) => {
+                let opt = document.createElement("option");
+                opt.value = i;
+                opt.text = `${k.nama} (${k.nomor})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function tambahKontak() {
+            let n = document.getElementById("namaKontak").value.trim();
+            let num = document.getElementById("nomorKontak").value.trim();
+            if (!n || !num) return alert("Lengkapi nama dan nomor!");
+            if(num.startsWith("0")) num = "62" + num.slice(1);
+            if(num.startsWith("8")) num = "62" + num;
+            kontak.push({ nama: n, nomor: num });
+            saveAndRefresh();
+            document.getElementById("namaKontak").value = "";
+            document.getElementById("nomorKontak").value = "";
+        }
+
+        function hapusSatuKontak() {
+            let i = document.getElementById("kontakSelect").value;
+            if (i === "") return alert("Pilih kontak yang ingin dihapus!");
+            if (confirm(`Hapus kontak ${kontak[i].nama}?`)) {
+                kontak.splice(i, 1);
+                saveAndRefresh();
+                document.getElementById("nomor").value = "";
+            }
+        }
+
+        function hapusSemuaKontak() {
+            if (confirm("Hapus seluruh database kontak? Tindakan ini tidak bisa dibatalkan.")) {
+                kontak = [];
+                saveAndRefresh();
+                document.getElementById("nomor").value = "";
+            }
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem("kontak", JSON.stringify(kontak));
+            renderKontak();
+        }
+
+        function isiNomor() {
+            let i = document.getElementById("kontakSelect").value;
+            if (i !== "") document.getElementById("nomor").value = kontak[i].nomor;
+        }
+
+        function importCSV() {
+            const f = document.getElementById("csvFile").files[0];
+            if (!f) return alert("Pilih file CSV dulu!");
+            const r = new FileReader();
+            r.onload = function(e) {
+                const rows = e.target.result.split("\n");
+                rows.forEach(row => {
+                    let [nama, nomor] = row.split(",");
+                    if (nama && nomor) {
+                        let val = nomor.trim();
+                        if(val.startsWith("0")) val = "62" + val.slice(1);
+                        kontak.push({ nama: nama.trim(), nomor: val });
+                    }
+                });
+                saveAndRefresh();
+            };
+            r.readAsText(f);
+        }
+
+        // ================= MEDIA & SEND SYSTEM =================
+        const fInput = document.getElementById("file");
+        fInput.addEventListener("change", function() {
+            const file = this.files[0];
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            const img = document.getElementById("previewImg");
+            const vid = document.getElementById("previewVideo");
+            if (file.type.startsWith("image")) {
+                img.src = url; img.style.display = "block"; vid.style.display = "none";
+            } else {
+                vid.src = url; vid.style.display = "block"; img.style.display = "none";
+            }
+        });
+
+        async function kirim() {
+            const st = document.getElementById("status");
+            const bt = document.getElementById("btnKirim");
+            const no = document.getElementById("nomor").value.trim();
+            const ps = document.getElementById("pesan").value.trim();
+            const fl = fInput.files[0];
+
+            if (!no) return alert("Nomor tujuan wajib diisi!");
+
+            bt.disabled = true;
+            st.innerText = "⏳ Sedang memproses media...";
+
+            let iK = document.getElementById("kontakSelect").value;
+            let sapa = (iK !== "" && kontak[iK]) ? kontak[iK].nama : "Bapak/Ibu";
+            let pFinal = ps.replace(/{{nama}}/g, sapa);
+
+            let mUrl = "";
+            let upOk = false;
+
+            try {
+                if (fl) {
+                    let fd = new FormData();
+                    fd.append("file", fl);
+                    fd.append("upload_preset", UPLOAD_PRESET);
+                    let up = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+                        method: "POST",
+                        body: fd
+                    });
+                    let rC = await up.json();
+                    if (rC.secure_url) { mUrl = rC.secure_url; upOk = true; }
+                }
+
+                // Pengiriman Teks + Link (Sesuai Struktur Project Lama Anda)
+                let msgFull = upOk ? (pFinal + "\n\n" + mUrl) : pFinal;
+                
+                st.innerText = "📤 Mengirim pesan ke WhatsApp...";
+                let bdy = { target: no, message: msgFull };
+                if (upOk) { bdy.url = mUrl; bdy.filename = fl.name; }
+
+                let res = await fetch("https://api.fonnte.com/send", {
+                    method: "POST",
+                    headers: { "Authorization": API_KEY_FONNTE, "Content-Type": "application/json" },
+                    body: JSON.stringify(bdy)
+                });
+
+                let d = await res.json();
+
+                if ((!d.status || !upOk) && mUrl) {
+                    // Fallback Link jika media asli gagal tampil
+                    await fetch("https://api.fonnte.com/send", {
+                        method: "POST",
+                        headers: { "Authorization": API_KEY_FONNTE, "Content-Type": "application/json" },
+                        body: JSON.stringify({ target: no, message: pFinal + "\n\n" + mUrl })
+                    });
+                    st.innerText = "⚠️ Media tertunda, link terkirim.";
+                } else if (d.status) {
+                    st.innerText = "✅ Pesan berhasil dikirim!";
+                    alert("Pesan Berhasil Terkirim!");
+                } else {
+                    throw new Error("Gagal Kirim");
+                }
+
+            } catch (err) {
+                console.error(err);
+                st.innerText = "❌ Terjadi kesalahan pengiriman.";
+            } finally {
+                bt.disabled = false;
+            }
+        }
+
+        checkAuth();
+    </script>
+</body>
+</html>
