@@ -1,38 +1,47 @@
-const fInput = document.getElementById("file");
+document.addEventListener("DOMContentLoaded", () => {
 
-fInput.addEventListener("change", function() {
+    const fInput = document.getElementById("file");
 
-    const file = this.files[0];
+    if (fInput) {
 
-    if (!file) return;
+        fInput.addEventListener("change", function () {
 
-    const url = URL.createObjectURL(file);
+            const file = this.files[0];
 
-    const img =
-        document.getElementById("previewImg");
+            if (!file) return;
 
-    const vid =
-        document.getElementById("previewVideo");
+            const url = URL.createObjectURL(file);
 
-    if (file.type.startsWith("image")) {
+            const img =
+                document.getElementById("previewImg");
 
-        img.src = url;
+            const vid =
+                document.getElementById("previewVideo");
 
-        img.style.display = "block";
+            if (file.type.startsWith("image")) {
 
-        vid.style.display = "none";
+                img.src = url;
 
-    } else {
+                img.style.display = "block";
 
-        vid.src = url;
+                vid.style.display = "none";
 
-        vid.style.display = "block";
+            } else {
 
-        img.style.display = "none";
+                vid.src = url;
+
+                vid.style.display = "block";
+
+                img.style.display = "none";
+            }
+        });
     }
 });
 
 async function kirim() {
+
+    const fInput =
+        document.getElementById("file");
 
     const st =
         document.getElementById("status");
@@ -141,29 +150,7 @@ async function kirim() {
 
         let d = await res.json();
 
-        if ((!d.status || !upOk) && mUrl) {
-
-            await fetch(
-                "https://api.fonnte.com/send",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Authorization": API_KEY_FONNTE,
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        target: no,
-                        message: pFinal + "\n\n" + mUrl
-                    })
-                }
-            );
-
-            st.innerText =
-                "⚠️ Media tertunda, link terkirim.";
-
-        } else if (d.status) {
+        if (d.status) {
 
             st.innerText =
                 "✅ Pesan berhasil dikirim!";
@@ -181,8 +168,9 @@ async function kirim() {
 
         st.innerText =
             "❌ Terjadi kesalahan pengiriman.";
+    }
 
-    } finally {
+    finally {
 
         bt.disabled = false;
     }
