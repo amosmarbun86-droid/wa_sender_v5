@@ -14,8 +14,11 @@ const firebaseConfig = {
 };
 
 // Inisialisasi Aplikasi Firebase & Database Reference (Menggunakan library compat di index.html)
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 const db = firebase.database();
+console.log("DATABASE AKTIF");
 const kontakRef = db.ref("kontak");
 
 // Variabel lokal penyimpan data kontak yang sinkron dengan Firebase
