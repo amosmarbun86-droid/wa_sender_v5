@@ -136,6 +136,7 @@ function hapusSatuKontak() {
     }
 }
 
+// Menghapus seluruh node 'kontak' di database Firebase
 function hapusSemuaKontak() {
     if (confirm("Hapus seluruh database kontak di cloud server? Tindakan ini tidak bisa dibatalkan.")) {
         kontakRef.remove()
@@ -156,27 +157,57 @@ function isiNomor() {
 function importCSV() {
     const f = document.getElementById("csvFile").files[0];
     if (!f) return alert("Pilih file CSV dulu!");
+    
+    // Aktifkan baris teks loading di area status dashboard utama
+    const st = document.getElementById("status");
+    if(st) st.innerText = "⏳ Sedang mengunggah kontak ke server cloud...";
+
     const r = new FileReader();
     r.onload = function(e) {
-        const rows = e.target.result.split("\n");
+        const rows = e.target.result.split(/\r?\n/);
+        
+        let uploadPromises = [];
         let jumlahSukses = 0;
 
         rows.forEach(row => {
+            if (!row.trim()) return;
+
             let [nama, nomor] = row.split(",");
             if (nama && nomor) {
-                // Bersihkan data nomor secara massal dari baris CSV
+                let namaClean = nama.trim();
                 let nomorValid = validasiFormatNomor(nomor.trim());
                 
-                if (nomorValid.length >= 10) {
-                    kontakRef.push({
-                        nama: nama.trim(),
+                if (namaClean !== "" && nomorValid.length >= 10) {
+                    // Masukkan eksekusi push ke dalam antrean promise asynchronous
+                    let p = kontakRef.push({
+                        nama: namaClean,
                         nomor: nomorValid
+                    }).then(() => {
+                        jumlahSukses++;
                     });
-                    jumlahSukses++;
+                    uploadPromises.push(p);
                 }
             }
         });
-        alert(`Import selesai! ${jumlahSukses} kontak berhasil dibersihkan dan disimpan ke server.`);
+
+        if (uploadPromises.length === 0) {
+            if(st) st.innerText = "";
+            document.getElementById("csvFile").value = "";
+            return alert("❌ Gagal! Tidak ada kontak valid yang ditemukan di file CSV.");
+        }
+
+        // Jalankan pelacakan sinkronisasi terpusat setelah semua antrean selesai diproses server
+        Promise.all(uploadPromises)
+            .then(() => {
+                if(st) st.innerText = "✅ Impor kontak CSV berhasil!";
+                document.getElementById("csvFile").value = "";
+                alert(`🎉 Sukses! ${jumlahSukses} kontak telah berhasil diverifikasi dan tersimpan di database server Firebase.`);
+            })
+            .catch((err) => {
+                if(st) st.innerText = "❌ Gagal sinkronisasi server.";
+                console.error(err);
+                alert("Terjadi kesalahan saat menyinkronkan data ke server: " + err.message);
+            });
     };
     r.readAsText(f);
 }
