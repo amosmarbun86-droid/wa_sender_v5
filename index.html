@@ -123,30 +123,50 @@
                 </main>
             </div>
 
+            <!-- ================= MUTASI SEKSI RIWAYAT CHAT INTERAKTIF DUA KOLOM ================= -->
             <div class="mt-8 glass-card p-6 rounded-3xl shadow-2xl">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-bold flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Riwayat Pengiriman
+                        <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Riwayat Pengiriman & Kotak Masuk
                     </h2>
                     <button onclick="hapusSemuaLog()" class="text-[10px] text-red-400/70 hover:text-red-400 font-bold uppercase tracking-wider">
                         Bersihkan Riwayat
                     </button>
                 </div>
-                <div class="overflow-x-auto max-h-60 rounded-xl border border-white/5">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-white/5 text-slate-400 uppercase text-[10px] tracking-wider">
-                                <th class="p-3">Waktu</th>
-                                <th class="p-3">Tujuan</th>
-                                <th class="p-3">Pesan</th>
-                                <th class="p-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logTableBody" class="divide-y divide-white/5">
-                            </tbody>
-                    </table>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-[450px] overflow-hidden rounded-2xl border border-white/5">
+                    
+                    <!-- KOLOM KIRI: LIST DAFTAR ORANG CHAT -->
+                    <div class="md:col-span-1 border-r border-white/5 overflow-y-auto flex flex-col h-full bg-black/20">
+                        <div class="p-3 border-b border-white/5 text-[10px] font-bold tracking-wider text-slate-400 uppercase bg-white/5">
+                            Kotak Masuk Chat
+                        </div>
+                        <div id="chatListContainer" class="divide-y divide-white/5 flex-grow overflow-y-auto">
+                            <!-- Daftar nama/nomor kontak di-render live via JavaScript di sini -->
+                        </div>
+                    </div>
+
+                    <!-- KOLOM KANAN: BUBBLE ROOM CHAT MASUK & BALASAN -->
+                    <div class="md:col-span-2 flex flex-col h-full bg-black/10">
+                        <!-- Header Ruang Chat Aktif -->
+                        <div class="p-3 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                            <div>
+                                <div id="activeChatName" class="font-semibold text-slate-200 text-xs">Pilih obrolan...</div>
+                                <div id="activeChatNumber" class="text-[10px] text-slate-500 font-mono mt-0.5"></div>
+                            </div>
+                        </div>
+
+                        <!-- Kontainer Gelembung Obrolan (Mendukung scroll otomatis) -->
+                        <div id="chatBubbleContainer" class="flex-grow p-4 overflow-y-auto space-y-3 flex flex-col bg-black/20">
+                            <div class="text-center text-slate-500 italic text-xs my-auto">
+                                Klik salah satu daftar chat di sebelah kiri untuk melihat detail histori pesan masuk dan balasan.
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
+            <!-- ================================================================================= -->
 
         </div>
     </div>
