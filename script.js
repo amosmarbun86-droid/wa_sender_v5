@@ -430,6 +430,77 @@ function hapusSemuaLog() {
         logRef.remove().catch(err => alert("Gagal membersihkan log: " + err.message));
     }
 }
+// ================= FITUR TAMBAHAN: BALAS LANGSUNG DARI OBROLAN =================
+
+// Mengontrol munculnya kolom input balasan ketika ruang chat dipilih
+function bukaRuangChat(nomor, nama) {
+    nomorChatAktif = nomor;
+    
+    document.getElementById("activeChatName").innerText = nama;
+    document.getElementById("activeChatNumber").innerText = `+${nomor}`;
+    
+    // Sinkronisasi ke form input nomor utama di atas (untuk menjaga kecocokan sistem lama)
+    if(document.getElementById("nomor")) {
+        document.getElementById("nomor").value = nomor;
+    }
+
+    // TAMPILKAN KOLOM BALASAN LANGSUNG
+    const replyArea = document.getElementById("quickReplyArea");
+    if (replyArea) {
+        replyArea.classList.remove("hidden");
+    }
+
+    renderBalonChat(nomor);
+}
+
+// Fungsi eksekusi pengiriman pesan dari Quick Reply Box
+async function kirimBalasanLangsung() {
+    const inputBalas = document.getElementById("quickReplyMessage");
+    const btnBalas = document.getElementById("btnQuickSend");
+    
+    if (!inputBalas || !nomorChatAktif) return;
+    
+    const pesanTeks = inputBalas.value.trim();
+    if (!pesanTeks) return alert("Tulis isi pesan balasan terlebih dahulu!");
+
+    // Kunci tombol balasan agar user tidak klik dua kali saat memproses
+    btnBalas.disabled = true;
+    btnBalas.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i>`;
+
+    // 1. Pindahkan pesan ke textarea utama di atas agar fungsi kirim() lama Anda memprosesnya dengan benar
+    if (document.getElementById("pesan")) {
+        document.getElementById("pesan").value = pesanTeks;
+    }
+    
+    // 2. Kosongkan input file media di atas jika sebelumnya ada file tersisa (memastikan balasan ini murni teks cepat)
+    if (fInput) {
+        fInput.value = "";
+        const img = document.getElementById("previewImg");
+        const vid = document.getElementById("previewVideo");
+        if(img) img.style.display = "none";
+        if(vid) vid.style.display = "none";
+    }
+
+    // 3. Panggil fungsi kirim() orisinal 1400-line milik Anda untuk menembak API Fonnte & Push ke Firebase
+    await kirim();
+
+    // 4. Reset & bersihkan kembali form balasan cepat setelah selesai dikirim
+    inputBalas.value = "";
+    btnBalas.disabled = false;
+    btnBalas.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Kirim`;
+    
+    // Kembalikan fokus kursor ke kolom balasan
+    inputBalas.focus();
+}
+
+// Mendukung pengiriman pesan langsung hanya dengan menekan tombol 'Enter' di keyboard HP / Laptop
+function handleQuickReplyKeyPress(event) {
+    if (event.key === "Enter") {
+        event.preventDefault(); // Mencegah submit form bawaan browser
+        kirimBalasanLangsung();
+    }
+}
+
 
 // Jalankan pengecekan status masuk admin sistem
 checkAuth();
