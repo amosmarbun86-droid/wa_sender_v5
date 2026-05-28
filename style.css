@@ -55,3 +55,26 @@ body {
 .btn-danger:hover { 
     background: rgba(239, 68, 68, 0.2); 
 }
+
+/* ================= CUSTOM SCROLLBAR UNTUK PANEL CHAT INTERAKTIF ================= */
+#chatListContainer::-webkit-scrollbar,
+#chatBubbleContainer::-webkit-scrollbar {
+    width: 6px; /* Mengatur ketebalan scrollbar menjadi tipis */
+}
+
+#chatListContainer::-webkit-scrollbar-track,
+#chatBubbleContainer::-webkit-scrollbar-track {
+    background: transparent; /* Latar belakang scrollbar dibuat transparan */
+}
+
+#chatListContainer::-webkit-scrollbar-thumb,
+#chatBubbleContainer::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1); /* Warna scrollbar semi-transparan putih samar */
+    border-radius: 10px;
+}
+
+#chatListContainer::-webkit-scrollbar-thumb:hover,
+#chatBubbleContainer::-webkit-scrollbar-thumb:hover {
+    background: rgba(34, 197, 94, 0.4); /* Berubah menjadi hijau samar saat kursor diarahkan */
+}
+/* ================================================================================= */
