@@ -68,11 +68,18 @@ logRef.on("value", (snapshot) => {
         let tr = document.createElement("tr");
         tr.className = "hover:bg-white/5 transition-colors";
         
-        let statusBadge = log.status.includes("✅") 
-            ? `<span class="px-2 py-1 bg-green-500/10 text-green-400 rounded-lg text-[10px] font-bold">SUKSES</span>`
-            : log.status.includes("⚠️")
-            ? `<span class="px-2 py-1 bg-yellow-500/10 text-yellow-400 rounded-lg text-[10px] font-bold">TERTUNDA</span>`
-            : `<span class="px-2 py-1 bg-red-500/10 text-red-400 rounded-lg text-[10px] font-bold">GAGAL</span>`;
+        // Pembeda warna badge status (Sukses, Tertunda, Pesan Masuk, atau Gagal)
+        let statusBadge = "";
+        if (log.status.includes("✅") || log.status === "Berhasil") {
+            statusBadge = `<span class="px-2 py-1 bg-green-500/10 text-green-400 rounded-lg text-[10px] font-bold">SUKSES</span>`;
+        } else if (log.status.includes("⚠️") || log.status.includes("Tertunda")) {
+            statusBadge = `<span class="px-2 py-1 bg-yellow-500/10 text-yellow-400 rounded-lg text-[10px] font-bold">TERTUNDA</span>`;
+        } else if (log.status.includes("📥") || log.status === "📥 PESAN MASUK") {
+            // WARNA BADGE BIRU UNTUK PESAN MASUK DARI PELANGGAN
+            statusBadge = `<span class="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-bold">PESAN MASUK</span>`;
+        } else {
+            statusBadge = `<span class="px-2 py-1 bg-red-500/10 text-red-400 rounded-lg text-[10px] font-bold">GAGAL</span>`;
+        }
 
         tr.innerHTML = `
             <td class="p-3 text-slate-400 font-mono text-[11px] whitespace-nowrap">${log.waktu}</td>
@@ -83,6 +90,7 @@ logRef.on("value", (snapshot) => {
         tbody.appendChild(tr);
     });
 });
+
 
 // ================= AUTH SYSTEM =================
 function checkAuth() {
