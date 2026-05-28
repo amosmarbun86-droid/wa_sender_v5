@@ -62,34 +62,53 @@ logRef.on("value", (snapshot) => {
     Object.keys(data).forEach(key => {
         logList.push({ id: key, ...data[key] });
     });
-    logList.reverse(); // Data terbaru akan selalu berada di urutan paling atas
+    logList.reverse(); // Data terbaru selalu di atas
 
     logList.forEach(log => {
         let tr = document.createElement("tr");
         tr.className = "hover:bg-white/5 transition-colors";
         
-        // Pembeda warna badge status (Sukses, Tertunda, Pesan Masuk, atau Gagal)
+        // --- PROSES COCOKKAN NOMOR DENGAN NAMA KONTAK ---
+        let tampilanTujuan = log.tujuan;
+        
+        // Jika data adalah pesan masuk, coba cari namanya di database lokal aplikasi
+        if (log.status.includes("📥") || log.status === "📥 PESAN MASUK") {
+            // Bersihkan format nomor untuk memastikan kecocokan (hilangkan spasi/karakter aneh)
+            const nomorBersih = log.tujuan.replace(/\D/g, '');
+            
+            // Cari di array kontak bawaan aplikasi Anda
+            const kontakDitemukan = kontak.find(k => k.nomor.replace(/\D/g, '') === nomorBersih);
+            
+            if (kontakDitemukan) {
+                // Jika ketemu di database Kontak, ubah tampilannya jadi: Nama (Nomor)
+                tampilanTujuan = `${kontakDitemukan.nama} (${log.tujuan})`;
+            }
+        }
+        // -------------------------------------------------
+
+        // Pembeda warna badge status
         let statusBadge = "";
         if (log.status.includes("✅") || log.status === "Berhasil") {
             statusBadge = `<span class="px-2 py-1 bg-green-500/10 text-green-400 rounded-lg text-[10px] font-bold">SUKSES</span>`;
         } else if (log.status.includes("⚠️") || log.status.includes("Tertunda")) {
             statusBadge = `<span class="px-2 py-1 bg-yellow-500/10 text-yellow-400 rounded-lg text-[10px] font-bold">TERTUNDA</span>`;
         } else if (log.status.includes("📥") || log.status === "📥 PESAN MASUK") {
-            // WARNA BADGE BIRU UNTUK PESAN MASUK DARI PELANGGAN
             statusBadge = `<span class="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-bold">PESAN MASUK</span>`;
         } else {
             statusBadge = `<span class="px-2 py-1 bg-red-500/10 text-red-400 rounded-lg text-[10px] font-bold">GAGAL</span>`;
         }
 
+        // Tampilkan data ke tabel (menggunakan variabel tampilanTujuan yang baru)
         tr.innerHTML = `
             <td class="p-3 text-slate-400 font-mono text-[11px] whitespace-nowrap">${log.waktu}</td>
-            <td class="p-3 font-semibold text-slate-300">${log.tujuan}</td>
+            <td class="p-3 font-semibold text-slate-300">${tampilanTujuan}</td>
             <td class="p-3 text-slate-400 max-w-xs truncate" title="${log.pesan}">${log.pesan}</td>
             <td class="p-3">${statusBadge}</td>
         `;
         tbody.appendChild(tr);
     });
 });
+
 
 
 // ================= AUTH SYSTEM =================
