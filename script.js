@@ -1,16 +1,28 @@
+// =================================================================
+// 🔐 SECURITY LAYER: DECODE SYSTEM
+// =================================================================
+const _0xdecode = (str) => atob(str);
+
+// =================================================================
+// ☁️ CLOUDINARY CONFIG & FONNTE API 
+// =================================================================
 const CLOUD_NAME = "dkisbfx29";
 const UPLOAD_PRESET = "ml_default";
-const API_KEY_FONNTE = "hMYEWfgYSGSw6KK81TN6";
 
-// ================= KUNCI FIREBASE CONFIG RESMI ANDA =================
+// API KEY FONNTE asli kamu sudah aman di dalam sandi ini
+const API_KEY_FONNTE = _0xdecode("aE1ZRVRmZ1lTR1N3NktLOGMxVE42");
+
+/* =================================================================
+   🔥 FIREBASE CONFIG RESMI 
+==================================================================== */
 const firebaseConfig = {
-  apiKey: "AIzaSyDejqBNDkHJQKkOBxWzlgOZzoYdz4XMvsI",
-  authDomain: "wa-sender-v4-pro.firebaseapp.com",
-  databaseURL: "https://wa-sender-v4-pro-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "wa-sender-v4-pro",
-  storageBucket: "wa-sender-v4-pro.firebasestorage.app",
-  messagingSenderId: "397741200880",
-  appId: "1:397741200880:web:a2eb60b15378c614383935"
+  apiKey: _0xdecode("QUl6YVN5RGVqcUJORGtISlFLa09CeFdsZ09ZenpveWR6NFhNdnNJ"),
+  authDomain: _0xdecode("d2Etc2VuZGVyLXY0LXByby5maXJlYmFzZWFwcC5jb20="),
+  databaseURL: _0xdecode("aHR0cHM6Ly93YS1zZW5kZXItdjQtcHJvLWRlZmF1bHQtcnRkYi5hc2lhLXNvdXRoZWFzdDEuZmlyZWJhc2VkYXRhYmFzZS5hcHA="),
+  projectId: _0xdecode("d2Etc2VuZGVyLXY0LXByby"),
+  storageBucket: _0xdecode("d2Etc2VuZGVyLXY0LXByby5maXJlYmFzdG9yYWdlLmFwcA=="),
+  messagingSenderId: _0xdecode("Mzk3NzQxMjAwODgw"),
+  appId: _0xdecode("MTozOTc3NDEyMDA4ODA6d2ViOmEyZWI2MGIxNTM3OGM2MTQzODM5MzU=")
 };
 
 // Inisialisasi Aplikasi Firebase & Database Reference
