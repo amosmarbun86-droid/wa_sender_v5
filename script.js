@@ -1,23 +1,15 @@
-// ================= OBFUSCATION SYSTEM =================
-
-function dec(v){
-    return atob(v);
-}
-
-const CLOUD_NAME = dec("ZGtpc2JmeDI5");
-const UPLOAD_PRESET = dec("bWxfZGVmYXVsdA==");
-const API_KEY_FONNTE = dec("aE1ZRVdmZ1lTR1N3Nks4MVRONg==");
-
-// ================= FIREBASE CONFIG =================
+const CLOUD_NAME = "dkisbfx29";
+const UPLOAD_PRESET = "ml_default";
+const API_KEY_FONNTE = "hMYEWfgYSGSw6KK81TN6";
 
 const firebaseConfig = {
-    apiKey: dec("QUl6YVN5RGVqcUJORGtISlFLa09CeFd6bGdPenpvWWR6NFhNdnNJ"),
-    authDomain: dec("d2Etc2VuZGVyLXY0LXByby5maXJlYmFzZWFwcC5jb20="),
-    databaseURL: dec("aHR0cHM6Ly93YS1zZW5kZXItdjQtcHJvLWRlZmF1bHQtcnRkYi5hc2lhLXNvdXRoZWFzdDEuZmlyZWJhc2VkYXRhYmFzZS5hcHA="),
-    projectId: dec("d2Etc2VuZGVyLXY0LXBybw=="),
-    storageBucket: dec("d2Etc2VuZGVyLXY0LXByby5maXJlYmFzZXN0b3JhZ2UuYXBw"),
-    messagingSenderId: dec("Mzk3NzQxMjAwODgw"),
-    appId: dec("MTozOTc3NDEyMDA4ODA6d2ViOmEyZWI2MGIxNTM3OGM2MTQzODM5MzU=")
+  apiKey: "AIzaSyDejqBNDkHJQKkOBxWzlgOZzoYdz4XMvsI",
+  authDomain: "wa-sender-v4-pro.firebaseapp.com",
+  databaseURL: "https://wa-sender-v4-pro-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wa-sender-v4-pro",
+  storageBucket: "wa-sender-v4-pro.firebasestorage.app",
+  messagingSenderId: "397741200880",
+  appId: "1:397741200880:web:a2eb60b15378c614383935"
 };
 
 // Inisialisasi Aplikasi Firebase & Database Reference
