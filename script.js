@@ -1,3 +1,8 @@
+// Meminta izin memunculkan notifikasi di perangkat
+if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+    Notification.requestPermission();
+}
+
 // =================================================================
 // 🔐 SECURITY LAYER: DECODE SYSTEM
 // =================================================================
@@ -538,6 +543,27 @@ function handleQuickReplyKeyPress(event) {
     if (event.key === "Enter") {
         event.preventDefault(); // Mencegah submit form bawaan browser
         kirimBalasanLangsung();
+    }
+}
+// Fungsi untuk membunyikan suara dan menampilkan pop-up notifikasi
+function pemicuNotifikasiPesan(namaAtauNomor, isiPesan) {
+    // 1. Notifikasi Suara (Menggunakan lonceng digital yang bersih)
+    const suaraNotif = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav');
+    suaraNotif.volume = 1.0;
+    suaraNotif.play().catch(err => console.log("Gagal memutar suara:", err));
+
+    // 2. Notifikasi Pop-up Layar
+    if (Notification.permission === "granted") {
+        const infoPopUp = new Notification("💬 Pesan Masuk Baru", {
+            body: `${namaAtauNomor}: ${isiPesan}`,
+
+            icon: 'https://cdn-icons-png.flaticon.com/512/124/124034.png',
+            tag: 'pesan-masuk'
+        });
+
+        infoPopUp.onclick = function() {
+            window.focus();
+        };
     }
 }
 
