@@ -232,9 +232,8 @@ function checkAuth() {
     }
 }
 
-const LOGIN_USER = dec("YWRtaW4=");
-const LOGIN_PASS = dec("MTAxMzEy");
-
+const LOGIN_USER = "admin";
+const LOGIN_PASS = "101312";
 function handleLogin() {
 
     const u = document.getElementById("username").value.trim();
