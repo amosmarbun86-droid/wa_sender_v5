@@ -556,7 +556,6 @@ function pemicuNotifikasiPesan(namaAtauNomor, isiPesan) {
     if (Notification.permission === "granted") {
         const infoPopUp = new Notification("💬 Pesan Masuk Baru", {
             body: `${namaAtauNomor}: ${isiPesan}`,
-
             icon: 'https://cdn-icons-png.flaticon.com/512/124/124034.png',
             tag: 'pesan-masuk'
         });
@@ -566,6 +565,32 @@ function pemicuNotifikasiPesan(namaAtauNomor, isiPesan) {
         };
     }
 }
+
+// Listener khusus untuk memicu notifikasi saat ada data chat baru masuk
+let databaseSiap = false;
+
+db.ref("logs").limitToLast(1).on("child_added", (snapshot) => {
+    // Lewati data-data lama saat aplikasi pertama kali dibuka
+    if (!databaseSiap) return;
+
+    const data = snapshot.val();
+    
+    // Deteksi apakah ini kategori pesan masuk (dari Fonnte atau status masuk)
+    const apakahPesanMasuk = data.sender || (data.status && data.status.includes("MASUK"));
+
+    if (apakahPesanMasuk) {
+        const pengirim = data.sender || data.tujuan || "Nomor Tidak Dikenal";
+        const teksPesan = data.message || data.pesan || "";
+
+        // Panggil mesin suara & pop-up yang sudah kamu buat di atas
+        pemicuNotifikasiPesan(pengirim, teksPesan);
+    }
+});
+
+// Tandai database siap setelah loading chat lama selesai
+db.ref("logs").once("value", () => {
+    databaseSiap = true;
+});
 
 // Jalankan pengecekan status masuk admin sistem
 checkAuth();
