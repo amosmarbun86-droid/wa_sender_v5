@@ -1,33 +1,16 @@
-// Meminta izin memunculkan notifikasi di perangkat
-if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-    Notification.requestPermission();
-}
-
-// =================================================================
-// 🔐 SECURITY LAYER: DECODE SYSTEM
-// =================================================================
-const _0xdecode = (str) => atob(str);
-
-// =================================================================
-// ☁️ CLOUDINARY CONFIG & FONNTE API 
-// =================================================================
 const CLOUD_NAME = "dkisbfx29";
 const UPLOAD_PRESET = "ml_default";
+const API_KEY_FONNTE = "hMYEWfgYSGSw6KK81TN6";
 
-// API KEY FONNTE asli kamu sudah aman di dalam sandi ini
-const API_KEY_FONNTE = _0xdecode("aE1ZRVRmZ1lTR1N3NktLOGMxVE42");
-
-/* =================================================================
-   🔥 FIREBASE CONFIG RESMI 
-==================================================================== */
+// ================= KUNCI FIREBASE CONFIG RESMI ANDA =================
 const firebaseConfig = {
-  apiKey: _0xdecode("QUl6YVN5RGVqcUJORGtISlFLa09CeFdsZ09ZenpveWR6NFhNdnNJ"),
-  authDomain: _0xdecode("d2Etc2VuZGVyLXY0LXByby5maXJlYmFzZWFwcC5jb20="),
-  databaseURL: _0xdecode("aHR0cHM6Ly93YS1zZW5kZXItdjQtcHJvLWRlZmF1bHQtcnRkYi5hc2lhLXNvdXRoZWFzdDEuZmlyZWJhc2VkYXRhYmFzZS5hcHA="),
-  projectId: _0xdecode("d2Etc2VuZGVyLXY0LXByby"),
-  storageBucket: _0xdecode("d2Etc2VuZGVyLXY0LXByby5maXJlYmFzdG9yYWdlLmFwcA=="),
-  messagingSenderId: _0xdecode("Mzk3NzQxMjAwODgw"),
-  appId: _0xdecode("MTozOTc3NDEyMDA4ODA6d2ViOmEyZWI2MGIxNTM3OGM2MTQzODM5MzU=")
+  apiKey: "AIzaSyDejqBNDkHJQKkOBxWzlgOZzoYdz4XMvsI",
+  authDomain: "wa-sender-v4-pro.firebaseapp.com",
+  databaseURL: "https://wa-sender-v4-pro-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wa-sender-v4-pro",
+  storageBucket: "wa-sender-v4-pro.firebasestorage.app",
+  messagingSenderId: "397741200880",
+  appId: "1:397741200880:web:a2eb60b15378c614383935"
 };
 
 // Inisialisasi Aplikasi Firebase & Database Reference
@@ -43,6 +26,11 @@ let kontak = [];
 let nomorChatAktif = null;
 let semuaLogData = {};
 
+// --- VARIABLE STATE UNTUK AUDIO NOTIFIKASI MASUK ---
+let aplikasiSiapNotif = false; // Mengamankan agar pesan lama tidak berbunyi saat APK baru dibuka
+const audioNotif = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav"); 
+// ---------------------------------------------------
+
 // Mendengarkan perubahan data secara langsung dari Firebase Realtime Server
 kontakRef.on("value", (snapshot) => {
     const data = snapshot.val();
@@ -51,13 +39,12 @@ kontakRef.on("value", (snapshot) => {
     if (data) {
         Object.keys(data).forEach((key) => {
             kontak.push({
-                id: key, // Menyimpan id firebase untuk keperluan penghapusan data spesifik
+                id: key, 
                 nama: data[key].nama,
                 nomor: data[key].nomor
             });
         });
     }
-    // Render otomatis menggunakan filter pencarian (jika kolom search terisi)
     const keyword = document.getElementById("searchKontak") ? document.getElementById("searchKontak").value.toLowerCase().trim() : "";
     if (keyword !== "") {
         filterKontak();
@@ -73,44 +60,60 @@ logRef.on("value", (snapshot) => {
     if (!listContainer) return;
     
     listContainer.innerHTML = "";
-    semuaLogData = {}; // Reset container penampung data lokal lokal
+    semuaLogData = {}; 
 
     if (!data) {
         listContainer.innerHTML = `<div class="p-4 text-center text-slate-500 italic text-xs">Belum ada histori obrolan.</div>`;
         return;
     }
 
-    // 1. KELOMPOKKAN PESAN BERDASARKAN DIGIT ANGKA NOMOR HP (SENDER ATAU RECEIVER)
+    let adaPesanMasukBaru = false;
+    let pengirimTerakhir = "";
+    let isiPesanTerakhir = "";
+
+    // 1. KELOMPOKKAN PESAN BERDASARKAN DIGIT ANGKA NOMOR HP
     Object.keys(data).forEach(key => {
         const item = data[key];
         if (!item.tujuan) return;
-        const nomorHP = item.tujuan.replace(/\D/g, ''); // Proteksi ambil karakter angka saja
+        const nomorHP = item.tujuan.replace(/\D/g, ''); 
         
         if (!semuaLogData[nomorHP]) {
             semuaLogData[nomorHP] = [];
         }
         semuaLogData[nomorHP].push(item);
+
+        // SYSTEM DETEKSI STRUKTUR PESAN MASUK BARU UNTUK TRIGGER AUDIO
+        const isPesanMasuk = item.status && (item.status.includes("📥") || item.status === "📥 PESAN MASUK");
+        if (aplikasiSiapNotif && isPesanMasuk && !item.sudahNotif) {
+            adaPesanMasukBaru = true;
+            pengirimTerakhir = nomorHP;
+            isiPesanTerakhir = item.pesan || "Mengirim media gambar";
+            
+            // Tandai di database Firebase agar tidak terus menerus berbunyi
+            logRef.child(key).update({ sudahNotif: true });
+        }
     });
+
+    // Jalankan pemicu suara jika terdeteksi data log chat masuk yang fresh
+    if (adaPesanMasukBaru) {
+        mainkanNotifikasi(pengirimTerakhir, isiPesanTerakhir);
+    }
 
     // 2. RENDER DAFTAR KOTAK MASUK DI PANEL SEBELAH KIRI
     Object.keys(semuaLogData).forEach(nomor => {
         const historiPesan = semuaLogData[nomor];
-        const pesanTerakhir = historiPesan[historiPesan.length - 1]; // Mengambil baris pesan paling baru
+        const pesanTerakhir = historiPesan[historiPesan.length - 1]; 
         
-        // Proses pencarian nama kontak di database internal
         const kontakDitemukan = kontak.find(k => k.nomor.replace(/\D/g, '') === nomor);
         const namaTampilan = kontakDitemukan ? kontakDitemukan.nama : `+${nomor}`;
 
-        // Deteksi arah indikator pesan terakhir (Masuk atau Keluar)
         const isPesanMasuk = pesanTerakhir.status.includes("📥") || pesanTerakhir.status === "📥 PESAN MASUK";
         
         const divItem = document.createElement("div");
         divItem.className = `p-3 flex flex-col gap-1 cursor-pointer transition-colors hover:bg-white/5 ${nomorChatAktif === nomor ? 'bg-white/10 hover:bg-white/10' : ''}`;
         
-        // Pasang fungsi trigger klik untuk membuka isi room chat gelembung di sebelah kanan
         divItem.onclick = () => bukaRuangChat(nomor, namaTampilan);
 
-        // Memotong tampilan jam dari string format waktu asli (misal "28-05-2026 17:06:26" diambil "17:06")
         let jamSaja = "";
         if (pesanTerakhir.waktu && pesanTerakhir.waktu.includes(" ")) {
             const partWaktu = pesanTerakhir.waktu.split(" ")[1];
@@ -134,9 +137,16 @@ logRef.on("value", (snapshot) => {
     if (nomorChatAktif && semuaLogData[nomorChatAktif]) {
         renderBalonChat(nomorChatAktif);
     }
+
+    // Aktifkan gerbang status siap notifikasi setelah 2 detik siklus loading awal data selesai
+    if (!aplikasiSiapNotif) {
+        setTimeout(() => {
+            aplikasiSiapNotif = true;
+        }, 2000);
+    }
 });
 
-// FUNGSI UNTUK MERENDER GELEMBUNG BALON CHAT (BUBBLE CHAT)
+// FUNGSI UNTUK MERENDER GELEMBUNG BALON CHAT (BUBBLE CHAT) - UPDATE PREVIEW MEDIA
 function renderBalonChat(nomor) {
     const bubbleContainer = document.getElementById("chatBubbleContainer");
     if (!bubbleContainer) return;
@@ -148,17 +158,44 @@ function renderBalonChat(nomor) {
         const isPesanMasuk = msg.status.includes("📥") || msg.status === "📥 PESAN MASUK";
         
         const wrapper = document.createElement("div");
-        // Kondisional Layout Posisi: Kiri untuk pesan masuk, Kanan untuk pesan balasan keluar
         wrapper.className = `flex w-full ${isPesanMasuk ? 'justify-start' : 'justify-end'}`;
 
         const bubble = document.createElement("div");
-        bubble.className = `max-w-[80%] p-3 rounded-2xl text-xs shadow-md flex flex-col gap-1 ${
+        bubble.className = `max-w-[80%] p-3 rounded-2xl text-xs shadow-md flex flex-col gap-2 ${
             isPesanMasuk 
             ? 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700/50' 
             : 'bg-green-600 text-white rounded-tr-none'
         }`;
 
-        // Set status centang indikator balasan
+        // --- SISTEM DETEKSI OTOMATIS LINK GAMBAR / VIDEO ---
+        let isiPesan = msg.pesan || '';
+        let mediaHTML = '';
+
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const urlsFound = isiPesan.match(urlRegex);
+
+        if (urlsFound) {
+            urlsFound.forEach(url => {
+                const cleanUrl = url.trim();
+                
+                if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp)/i) || (cleanUrl.includes("cloudinary.com") && !cleanUrl.match(/\.(mp4|webm|ogg|mov)/i))) {
+                    mediaHTML += `
+                        <div class="mt-1 rounded-lg overflow-hidden border border-white/10 bg-black/20">
+                            <img src="${cleanUrl}" class="max-w-full h-auto object-cover max-h-60 mx-auto cursor-pointer" onclick="window.open('${cleanUrl}', '_blank')" alt="Media">
+                        </div>`;
+                    isiPesan = isiPesan.replace(url, ''); 
+                } 
+                else if (cleanUrl.match(/\.(mp4|webm|ogg|mov)/i)) {
+                    mediaHTML += `
+                        <div class="mt-1 rounded-lg overflow-hidden border border-white/10 bg-black/20">
+                            <video src="${cleanUrl}" controls class="max-w-full max-h-60 mx-auto"></video>
+                        </div>`;
+                    isiPesan = isiPesan.replace(url, ''); 
+                }
+            });
+        }
+        // ----------------------------------------------------
+
         let centangStatus = "✓";
         if (msg.status.includes("✅") || msg.status === "✅ Berhasil") {
             centangStatus = "✓✓";
@@ -167,7 +204,8 @@ function renderBalonChat(nomor) {
         }
 
         bubble.innerHTML = `
-            <div class="break-words leading-relaxed text-[11px]">${msg.pesan || ''}</div>
+            ${mediaHTML}
+            <div class="break-words leading-relaxed text-[11px]">${isiPesan.trim() || (mediaHTML ? '' : '-')}</div>
             <div class="text-[8px] self-end mt-1 font-mono opacity-60 flex items-center gap-1 select-none">
                 <span>${msg.waktu}</span>
                 <span>${isPesanMasuk ? '' : centangStatus}</span>
@@ -178,14 +216,10 @@ function renderBalonChat(nomor) {
         bubbleContainer.appendChild(wrapper);
     });
 
-    // OPTIMASI SCROLL: Penyesuaian waktu tunda (100ms) untuk memastikan DOM selesai merender list panjang sebelum digulir penuh ke bawah
     setTimeout(() => {
         bubbleContainer.scrollTop = bubbleContainer.scrollHeight;
     }, 100);
 }
-// =============================================================================================
-
-
 
 // ================= AUTH SYSTEM =================
 function checkAuth() {
@@ -225,7 +259,6 @@ function renderKontak(kontakFilter = null) {
 
     daftarKontak.forEach((k) => {
         let opt = document.createElement("option");
-        // Mencari index asli dari array utama kontak agar fungsionalitas tombol hapus/isi tetap akurat
         const indexAsli = kontak.findIndex(item => item.id === k.id);
         opt.value = indexAsli;
         opt.text = `${k.nama} (${k.nomor})`;
@@ -233,7 +266,6 @@ function renderKontak(kontakFilter = null) {
     });
 }
 
-// Fungsi Pencarian Kontak Secara Live
 function filterKontak() {
     const keyword = document.getElementById("searchKontak").value.toLowerCase().trim();
     if (keyword === "") {
@@ -294,6 +326,7 @@ function hapusSemuaKontak() {
     }
 }
 
+// Menghubungkan trigger otomatis isi data input nomor dari dropdown lama Anda
 function isiNomor() {
     let i = document.getElementById("kontakSelect").value;
     if (i !== "" && kontak[i]) document.getElementById("nomor").value = kontak[i].nomor;
@@ -357,7 +390,7 @@ async function kirim() {
 
     let mUrl = "";
     let upOk = false;
-    let statusLog = "❌ Gagal"; // Status default untuk dicatat ke riwayat log
+    let statusLog = "❌ Gagal"; 
 
     try {
         if (fl) {
@@ -409,7 +442,6 @@ async function kirim() {
     } finally {
         bt.disabled = false;
         
-        // Simpan Log Pengiriman ke Firebase secara otomatis
         const sekarang = new Date();
         const opsiWaktu = { 
             day: '2-digit', month: '2-digit', year: 'numeric', 
@@ -426,7 +458,6 @@ async function kirim() {
     }
 }
 
-// Fungsi membersihkan seluruh data riwayat pesan di Firebase
 function hapusSemuaLog() {
     if (confirm("Hapus seluruh data riwayat pengiriman di cloud server?")) {
         logRef.remove().catch(err => alert("Gagal membersihkan log: " + err.message));
@@ -437,19 +468,16 @@ function hapusSemuaLog() {
 // ================= FITUR TAMBAHAN: BALAS LANGSUNG & KONTROL MOBILE ===========================
 // =============================================================================================
 
-// Mengontrol munculnya kolom input balasan ketika ruang chat dipilih
 function bukaRuangChat(nomor, nama) {
     nomorChatAktif = nomor;
     
     document.getElementById("activeChatName").innerText = nama;
     document.getElementById("activeChatNumber").innerText = `+${nomor}`;
     
-    // Sinkronisasi ke form input nomor utama di atas (untuk menjaga kecocokan sistem lama)
     if(document.getElementById("nomor")) {
         document.getElementById("nomor").value = nomor;
     }
 
-    // TAMPILKAN KOLOM BALASAN LANGSUNG
     const replyArea = document.getElementById("quickReplyArea");
     if (replyArea) {
         replyArea.classList.remove("hidden");
@@ -457,7 +485,6 @@ function bukaRuangChat(nomor, nama) {
 
     renderBalonChat(nomor);
 
-    // AUTOMATIC SMOOTH SCROLL KE AREA CHAT JIKA DIAKSES VIA SMARTPHONE / MOBILE LAYAR KECIL
     if (window.innerWidth < 768) {
         setTimeout(() => {
             const elHeader = document.getElementById("activeChatName");
@@ -468,20 +495,17 @@ function bukaRuangChat(nomor, nama) {
     }
 }
 
-// FUNGSI BACK: MEMBANTU USER HP UNTUK KEMBALI KE DAFTAR KOTAK MASUK UTAMA DI ATAS
 function kembaliKeDaftarChat() {
     nomorChatAktif = null;
     
     document.getElementById("activeChatName").innerText = "Pilih obrolan...";
     document.getElementById("activeChatNumber").innerText = "";
     
-    // Sembunyikan kembali area balas cepat
     const replyArea = document.getElementById("quickReplyArea");
     if (replyArea) {
         replyArea.classList.add("hidden");
     }
 
-    // Kembalikan isi container balon chat ke petunjuk default
     const bubbleContainer = document.getElementById("chatBubbleContainer");
     if (bubbleContainer) {
         bubbleContainer.innerHTML = `
@@ -491,14 +515,12 @@ function kembaliKeDaftarChat() {
         `;
     }
 
-    // Scroll layar secara halus ke atas menjangkau panel List Kotak Masuk kembali
     const listTitle = document.querySelector("#chatListContainer");
     if (listTitle) {
         listTitle.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }
 
-// Fungsi eksekusi pengiriman pesan dari Quick Reply Box
 async function kirimBalasanLangsung() {
     const inputBalas = document.getElementById("quickReplyMessage");
     const btnBalas = document.getElementById("btnQuickSend");
@@ -508,16 +530,13 @@ async function kirimBalasanLangsung() {
     const pesanTeks = inputBalas.value.trim();
     if (!pesanTeks) return alert("Tulis isi pesan balasan terlebih dahulu!");
 
-    // Kunci tombol balasan agar user tidak klik dua kali saat memproses
     btnBalas.disabled = true;
     btnBalas.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i>`;
 
-    // 1. Pindahkan pesan ke textarea utama di atas agar fungsi kirim() lama Anda memprosesnya dengan benar
     if (document.getElementById("pesan")) {
         document.getElementById("pesan").value = pesanTeks;
     }
     
-    // 2. Kosongkan input file media di atas jika sebelumnya ada file tersisa (memastikan balasan ini murni teks cepat)
     if (fInput) {
         fInput.value = "";
         const img = document.getElementById("previewImg");
@@ -526,71 +545,48 @@ async function kirimBalasanLangsung() {
         if(vid) vid.style.display = "none";
     }
 
-    // 3. Panggil fungsi kirim() orisinal milik Anda untuk menembak API Fonnte & Push ke Firebase
     await kirim();
 
-    // 4. Reset & bersihkan kembali form balasan cepat setelah selesai dikirim
     inputBalas.value = "";
     btnBalas.disabled = false;
     btnBalas.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Kirim`;
     
-    // Kembalikan fokus kursor ke kolom balasan
     inputBalas.focus();
 }
 
-// Mendukung pengiriman pesan langsung hanya dengan menekan tombol 'Enter' di keyboard HP / Laptop
 function handleQuickReplyKeyPress(event) {
     if (event.key === "Enter") {
-        event.preventDefault(); // Mencegah submit form bawaan browser
+        event.preventDefault(); 
         kirimBalasanLangsung();
     }
 }
-// Fungsi untuk membunyikan suara dan menampilkan pop-up notifikasi
-function pemicuNotifikasiPesan(namaAtauNomor, isiPesan) {
-    // 1. Notifikasi Suara (Menggunakan lonceng digital yang bersih)
-    const suaraNotif = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav');
-    suaraNotif.volume = 1.0;
-    suaraNotif.play().catch(err => console.log("Gagal memutar suara:", err));
 
-    // 2. Notifikasi Pop-up Layar
-    if (Notification.permission === "granted") {
-        const infoPopUp = new Notification("💬 Pesan Masuk Baru", {
-            body: `${namaAtauNomor}: ${isiPesan}`,
-            icon: 'https://cdn-icons-png.flaticon.com/512/124/124034.png',
-            tag: 'pesan-masuk'
-        });
-
-        infoPopUp.onclick = function() {
-            window.focus();
-        };
+// FUNGSI UTK REFRESH MANUAL DATA CHAT MASUK DARI FIREBASE
+function manualRefreshChat() {
+    const icon = document.getElementById("iconRefresh");
+    if (icon) {
+        icon.classList.add("animate-spin", "text-green-400"); 
     }
+
+    logRef.once("value").then((snapshot) => {
+        if (icon) {
+            setTimeout(() => {
+                icon.classList.remove("animate-spin", "text-green-400");
+            }, 600); 
+        }
+    }).catch((err) => {
+        console.error("Gagal refresh data:", err);
+        if (icon) icon.classList.remove("animate-spin", "text-green-400");
+    });
 }
 
-// Listener khusus untuk memicu notifikasi saat ada data chat baru masuk
-let databaseSiap = false;
-
-db.ref("logs").limitToLast(1).on("child_added", (snapshot) => {
-    // Lewati data-data lama saat aplikasi pertama kali dibuka
-    if (!databaseSiap) return;
-
-    const data = snapshot.val();
-    
-    // Deteksi apakah ini kategori pesan masuk (dari Fonnte atau status masuk)
-    const apakahPesanMasuk = data.sender || (data.status && data.status.includes("MASUK"));
-
-    if (apakahPesanMasuk) {
-        const pengirim = data.sender || data.tujuan || "Nomor Tidak Dikenal";
-        const teksPesan = data.message || data.pesan || "";
-
-        // Panggil mesin suara & pop-up yang sudah kamu buat di atas
-        pemicuNotifikasiPesan(pengirim, teksPesan);
+// FUNGSI UNTUK MEMICU SUARA NOTIFIKASI DI DALAM APK ANDROID
+function mainkanNotifikasi(nomor, pesan) {
+    if (audioNotif) {
+        audioNotif.play().catch(err => console.log("Gagal memutar audio di APK:", err));
     }
-});
-
-// Tandai database siap setelah loading chat lama selesai
-db.ref("logs").once("value", () => {
-    databaseSiap = true;
-});
+    console.log(`Notifikasi Pesan Masuk Berhasil Dipicu untuk: +${nomor}`);
+}
 
 // Jalankan pengecekan status masuk admin sistem
 checkAuth();
