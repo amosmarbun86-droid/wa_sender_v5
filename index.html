@@ -12,151 +12,175 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 </head>
 <body>
 
     <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
         <div class="glass-card p-8 rounded-3xl w-full max-w-md shadow-2xl">
             <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div class="w-20 h-20 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 bag-anim">
                     <i class="fa-solid fa-lock text-4xl text-green-400"></i>
                 </div>
                 <h2 class="text-2xl font-bold">Secure Access</h2>
-                <p class="text-slate-400 text-sm">Dashboard Logistik Amhosrcp AI</p>
+                <p class="text-slate-400 text-xs mt-2">Masuk menggunakan Akun Firebase Project Anda</p>
             </div>
+            
             <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-2 block">Username</label>
-                    <input type="text" id="username" class="input-field w-full p-4 rounded-2xl text-sm" placeholder="Admin">
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-4 top-4 text-slate-400 text-sm"></i>
+                    <input type="email" id="username" placeholder="Masukkan Email Firebase" class="input-field w-full p-4 rounded-2xl text-xs text-slate-200 pl-11 bg-black/20">
                 </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-2 block">Password</label>
-                    <input type="password" id="password" class="input-field w-full p-4 rounded-2xl text-sm" placeholder="••••••">
+                <div class="relative">
+                    <i class="fa-solid fa-key absolute left-4 top-4 text-slate-400 text-sm"></i>
+                    <input type="password" id="password" placeholder="Masukkan Password" class="input-field w-full p-4 rounded-2xl text-xs text-slate-200 pl-11 bg-black/20">
                 </div>
-                <button onclick="handleLogin()" class="btn-primary w-full py-4 rounded-2xl font-bold text-lg shadow-lg mt-2">
-                    LOGIN
+                <button onclick="handleLogin()" class="btn-primary w-full p-4 rounded-2xl text-xs font-bold text-white shadow-lg shadow-green-500/20 hover:opacity-90 active:scale-[0.98]">
+                    LOGIN SYSTEM
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="mainDashboard" class="hidden-section min-h-screen p-4 md:p-8">
-        <div class="max-w-6xl mx-auto">
-            <header class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
-                <div>
-                    <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
-                        WA Sender V4 Pro
-                    </h1>
-                    <p class="text-slate-400 text-xs mt-1">Sistem Pengiriman Pesan & Database Kontak</p>
+    <div id="mainDashboard" class="hidden-section min-h-screen p-4 md:p-6 lg:p-8 flex flex-col max-w-[1600px] mx-auto gap-6">
+        
+        <header class="glass-card p-4 md:p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center">
+                    <i class="fa-brands fa-whatsapp text-2xl text-green-400"></i>
                 </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight">DASHBOARD LOGISTIK</h1>
+                    <p class="text-[10px] text-green-400 font-mono flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> Powered Amos'rcpdroid 86
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
                 <button onclick="handleLogout()" class="bg-red-500/10 hover:bg-red-500/20 px-6 py-3 rounded-2xl text-[10px] font-bold text-red-400 transition-colors border border-red-500/20">
                     LOGOUT SYSTEM
                 </button>
-            </header>
+            </div>
+        </header>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <aside class="lg:col-span-4 space-y-6">
-                    <div class="glass-card p-6 rounded-3xl">
-                        <h2 class="text-lg font-bold mb-6 flex items-center gap-2">
-                            <i class="fa-solid fa-users text-green-400"></i> Kelola Kontak
-                        </h2>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <input type="text" id="searchKontak" oninput="filterKontak()" placeholder="🔍 Cari nama atau nomor..." class="input-field w-full p-3 rounded-xl text-xs mb-2">
-                            </div>
-
-                            <div class="flex gap-2">
-                                <select id="kontakSelect" onchange="isiNomor()" class="input-field flex-grow p-4 rounded-2xl text-xs">
-                                    <option value="">-- Pilih Kontak --</option>
-                                </select>
-                                <button onclick="hapusSatuKontak()" class="btn-danger p-4 rounded-2xl flex items-center justify-center transition-all" title="Hapus Kontak Terpilih">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </div>
-
-                            <div class="pt-4 border-t border-white/5 space-y-3">
-                                <input type="text" id="namaKontak" placeholder="Nama Baru" class="input-field w-full p-4 rounded-2xl text-xs">
-                                <input type="text" id="nomorKontak" placeholder="628..." class="input-field w-full p-4 rounded-2xl text-xs">
-                                <button onclick="tambahKontak()" class="btn-primary w-full py-4 rounded-2xl font-bold text-xs">
-                                    Simpan Kontak
-                                </button>
-                            </div>
-
-                            <div class="pt-6 border-t border-white/5">
-                                <input type="file" id="csvFile" accept=".csv" class="hidden">
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button onclick="document.getElementById('csvFile').click()" class="bg-white/5 py-3 rounded-xl text-[9px] font-bold uppercase">Pilih CSV</button>
-                                    <button onclick="importCSV()" class="bg-white/5 py-3 rounded-xl text-[9px] font-bold uppercase">Import</button>
-                                </div>
-                                <button onclick="hapusSemuaKontak()" class="w-full mt-3 py-2 text-[9px] text-red-400/50 hover:text-red-400 uppercase font-bold tracking-tighter">
-                                    Hapus Semua Database
-                                </button>
-                            </div>
-                        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1 min-h-0">
+            
+            <div class="lg:col-span-5 space-y-6 flex flex-col h-full min-h-0">
+                
+                <div class="glass-card p-5 rounded-3xl flex flex-col gap-4">
+                    <div class="flex items-center gap-2 border-b border-white/5 pb-3">
+                        <i class="fa-solid fa-paper-plane text-green-400 text-xs"></i>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Kirim Pesan Broadcast</h3>
                     </div>
-                </aside>
 
-                <main class="lg:col-span-8 space-y-6">
-                    <div class="glass-card p-8 rounded-3xl shadow-2xl">
-                        <div class="space-y-5">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Nomor Tujuan</label>
-                                <input type="text" id="nomor" placeholder="628..." class="input-field w-full p-4 rounded-2xl font-mono text-green-400">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Pesan (Gunakan {{nama}})</label>
-                                <textarea id="pesan" rows="5" placeholder="Halo {{nama}}..." class="input-field w-full p-5 rounded-2xl resize-none text-sm"></textarea>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Media (Gambar/Video)</label>
-                                <input type="file" id="file" accept="image/*,video/*" class="input-field w-full p-3 rounded-2xl text-[10px]">
-                                <img id="previewImg" style="display:none; max-width:100%; margin-top:10px; border-radius:12px;">
-                                <video id="previewVideo" controls style="display:none; max-width:100%; margin-top:10px; border-radius:12px;"></video>
-                            </div>
-                            <div id="status" class="text-center text-[11px] font-medium min-h-[20px]"></div>
-                            <button id="btnKirim" onclick="kirim()" class="btn-primary w-full py-5 rounded-3xl font-black text-lg tracking-widest shadow-2xl shadow-green-500/20">
-                                KIRIM PESAN & LINK
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-2">
+                            <select id="kontakSelect" onchange="isiNomor()" class="input-field w-full p-3 rounded-xl text-xs text-slate-300 bg-black/40">
+                                <option value="">-- Pilih Kontak --</option>
+                            </select>
+                        </div>
+                        <button onclick="hapusSatuKontak()" class="btn-danger p-3 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Hapus
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <input type="text" id="nomor" placeholder="628xxx (Gunakan Kode Negara)" class="input-field w-full p-3.5 rounded-xl text-xs text-slate-200 pl-9 bg-black/40 font-mono">
+                        <i class="fa-solid fa-phone absolute left-3 top-4 text-slate-500 text-xs"></i>
+                    </div>
+
+                    <textarea id="pesan" rows="4" placeholder="Tulis pesan Anda disini... Gunakan {{nama}} untuk menyapa nama kontak otomatis." class="input-field w-full p-3.5 rounded-xl text-xs text-slate-200 bg-black/40 resize-none leading-relaxed"></textarea>
+
+                    <div class="border border-dashed border-white/10 rounded-xl p-3 bg-black/20 flex flex-col gap-2">
+                        <label class="flex items-center justify-center gap-2 p-2 bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer transition-colors border border-white/5">
+                            <i class="fa-solid fa-image text-slate-400 text-xs"></i>
+                            <span class="text-[10px] font-semibold text-slate-300">Pilih Gambar / Video Balasan</span>
+                            <input type="file" id="file" accept="image/*,video/*" class="hidden">
+                        </label>
+                        <img id="previewImg" class="hidden rounded-lg max-h-[120px] object-cover mx-auto">
+                        <video id="previewVideo" class="hidden rounded-lg max-h-[120px] mx-auto" controls></video>
+                    </div>
+
+                    <button id="btnKirim" onclick="kirim()" class="btn-primary w-full p-3.5 rounded-xl text-xs font-bold text-white shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-share-from-square"></i> EKSEKUSI KIRIM SEKARANG
+                    </button>
+                    <div id="status" class="text-center text-[10px] font-mono text-slate-400 bg-black/20 py-1.5 rounded-lg border border-white/5">- Ready -</div>
+                </div>
+
+                <div class="glass-card p-5 rounded-3xl flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-address-book text-green-400 text-xs"></i>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Database Kontak Cloud</h3>
+                        </div>
+                        <button onclick="hapusSemuaKontak()" class="text-[9px] font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 px-2 py-1 rounded-md border border-red-500/20 transition-colors">
+                            Kosongkan Server
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="namaKontak" placeholder="Nama Lengkap" class="input-field p-3 rounded-xl text-xs text-slate-200 bg-black/40">
+                        <input type="text" id="nomorKontak" placeholder="No HP (08/62)" class="input-field p-3 rounded-xl text-xs text-slate-200 bg-black/40">
+                    </div>
+                    <button onclick="tambahKontak()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-3 rounded-xl text-xs font-bold transition-all text-slate-200 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-user-plus"></i> Simpan Kontak Baru
+                    </button>
+
+                    <div class="border-t border-white/5 pt-3 flex flex-col gap-2">
+                        <div class="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+                            <i class="fa-solid fa-file-csv"></i> Mass Import CSV Database
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="file" id="csvFile" accept=".csv" class="input-field flex-1 p-2 rounded-xl text-[10px] text-slate-400 bg-black/40">
+                            <button onclick="importCSV()" class="bg-green-600 hover:bg-green-700 px-4 rounded-xl text-[10px] font-bold text-white transition-colors shadow-md">
+                                Import Cloud
                             </button>
                         </div>
                     </div>
-                </main>
+                </div>
+
             </div>
 
-            <div class="mt-8 glass-card p-6 rounded-3xl shadow-2xl">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-bold flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Riwayat Pengiriman & Kotak Masuk
-                    </h2>
-                    <button onclick="hapusSemuaLog()" class="text-[10px] text-red-400/70 hover:text-red-400 font-bold uppercase tracking-wider">
-                        Bersihkan Riwayat
-                    </button>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[450px] rounded-2xl border border-white/5 overflow-hidden">
+            <div class="lg:col-span-7 glass-card rounded-3xl overflow-hidden flex flex-col h-[755px] border border-white/10">
+                <div class="grid grid-cols-12 h-full min-h-0">
                     
-                    <div class="md:col-span-1 border-r border-white/5 flex flex-col h-[200px] md:h-full bg-black/20 overflow-hidden">
-                        <div class="p-3 border-b border-white/5 text-[10px] font-bold tracking-wider text-slate-400 uppercase bg-white/5 sticky top-0 z-10 flex justify-between items-center">
-    <span>Kotak Masuk Chat</span>
-    <button onclick="manualRefreshChat()" class="text-slate-400 hover:text-green-400 transition-colors p-1" title="Refresh Chat">
-        <i id="iconRefresh" class="fa-solid fa-rotate"></i>
-    </button>
-</div>
-
-                        <div id="chatListContainer" class="divide-y divide-white/5 flex-grow overflow-y-auto">
+                    <div class="col-span-5 border-r border-white/5 flex flex-col h-full bg-black/10">
+                        <div class="p-3 border-b border-white/5 flex flex-col gap-2 bg-black/20">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-comments text-green-400"></i> Kotak Masuk Live
+                                </span>
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="manualRefreshChat()" class="text-slate-400 hover:text-white transition-colors p-1" title="Refresh data dari cloud">
+                                        <i id="iconRefresh" class="fa-solid fa-rotate text-xs"></i>
+                                    </button>
+                                    <button onclick="hapusSemuaLog()" class="text-red-400 hover:text-red-300 transition-colors text-[9px] font-bold bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20" title="Bersihkan histori riwayat server">
+                                        Clear Log
+                                    </button>
+                                </div>
                             </div>
+                            <div class="relative">
+                                <input type="text" id="searchKontak" onkeyup="filterKontak()" placeholder="Cari nama / nomor kontak..." 
+                                       class="input-field w-full p-2 rounded-xl text-[10px] text-slate-300 pl-7 bg-black/40">
+                                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-3 text-slate-500 text-[9px]"></i>
+                            </div>
+                        </div>
+
+                        <div id="chatListContainer" class="flex-1 overflow-y-auto divide-y divide-white/[0.03]">
+                            <div class="p-4 text-center text-slate-500 italic text-xs">Belum ada histori obrolan.</div>
+                        </div>
                     </div>
 
-                    <div class="md:col-span-2 flex flex-col h-[420px] md:h-full bg-black/10 overflow-hidden">
-                        <div class="p-3 border-b border-white/5 bg-white/5 flex items-center gap-3 sticky top-0 z-10">
-                            <button onclick="kembaliKeDaftarChat()" class="md:hidden text-slate-400 hover:text-white p-1 text-sm flex items-center justify-center" title="Kembali ke daftar">
-                                <i class="fa-solid fa-arrow-left text-base"></i>
-                            </button>
-                            
-                            <div class="flex-grow">
-                                <div id="activeChatName" class="font-semibold text-slate-200 text-xs">Pilih obrolan...</div>
-                                <div id="activeChatNumber" class="text-[10px] text-slate-500 font-mono mt-0.5"></div>
+                    <div class="col-span-7 flex flex-col h-full bg-slate-900/40 relative">
+                        
+                        <div class="p-3 bg-black/20 border-b border-white/5 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md">
+                            <div class="flex flex-col min-w-0">
+                                <div id="activeChatName" class="font-bold text-xs text-slate-200 truncate">Pilih obrolan...</div>
+                                <div id="activeChatNumber" class="text-[9px] text-slate-500 font-mono mt-0.5"></div>
                             </div>
+                            <button onclick="kembaliKeDaftarChat()" class="lg:hidden text-slate-400 hover:text-white p-1.5 bg-white/5 rounded-lg border border-white/5 text-[10px] font-semibold flex items-center gap-1 transition-colors">
+                                <i class="fa-solid fa-chevron-left"></i> Kembali
+                            </button>
                         </div>
 
                         <div id="chatBubbleContainer" class="flex-1 min-h-0 p-4 overflow-y-auto space-y-3 flex flex-col bg-black/20">
@@ -178,7 +202,8 @@
 
                 </div>
             </div>
-            </div>
+
+        </div>
     </div>
 
     <script src="script.js"></script>
