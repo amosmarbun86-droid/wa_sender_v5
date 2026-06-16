@@ -73,17 +73,21 @@
                         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Kirim Pesan Broadcast</h3>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2">
-    <div class="col-span-2">
-        <select id="kontakSelect" onchange="isiNomor()" class="input-field w-full p-3 rounded-xl text-xs text-slate-300 bg-black/40">
-            <option value="">-- Pilih Kontak --</option>
-        </select>
-    </div>
-    <button onclick="hapusSatuKontak()" class="btn-danger p-3 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1">
-        <i class="fa-solid fa-trash"></i> Hapus
-    </button>
-</div>
+                    <div class="relative mb-1">
+                        <input type="text" id="cariKontakForm" onkeyup="cariKontakCepatForm()" placeholder="Ketik nama / nomor untuk menyaring kontak..." class="input-field w-full p-3 rounded-xl text-xs text-slate-200 pl-9 bg-black/40 border-green-500/20">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-slate-500 text-xs"></i>
+                    </div>
 
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-2">
+                            <select id="kontakSelect" onchange="isiNomor()" class="input-field w-full p-3 rounded-xl text-xs text-slate-300 bg-black/40">
+                                <option value="">-- Pilih Kontak --</option>
+                            </select>
+                        </div>
+                        <button onclick="hapusSatuKontak()" class="btn-danger p-3 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Hapus
+                        </button>
+                    </div>
 
                     <div class="relative">
                         <input type="text" id="nomor" placeholder="628xxx (Gunakan Kode Negara)" class="input-field w-full p-3.5 rounded-xl text-xs text-slate-200 pl-9 bg-black/40 font-mono">
@@ -161,8 +165,7 @@
                                 </div>
                             </div>
                             <div class="relative">
-                                <input type="text" id="searchKontak" onkeyup="filterKontak()" placeholder="Cari nama / nomor kontak..." 
-                                       class="input-field w-full p-2 rounded-xl text-[10px] text-slate-300 pl-7 bg-black/40">
+                                <input type="text" id="searchKontak" onkeyup="filterKontak()" placeholder="Cari nama / nomor kontak..." class="input-field w-full p-2 rounded-xl text-[10px] text-slate-300 pl-7 bg-black/40">
                                 <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-3 text-slate-500 text-[9px]"></i>
                             </div>
                         </div>
@@ -191,11 +194,8 @@
                         </div>
 
                         <div id="quickReplyArea" class="hidden p-3 bg-white/5 border-t border-white/5 flex gap-2 items-center sticky bottom-0 z-10">
-                            <input type="text" id="quickReplyMessage" placeholder="Ketik balasan Anda..." 
-                                   class="input-field flex-grow p-3 rounded-xl text-xs text-slate-200 bg-black/40"
-                                   onkeypress="handleQuickReplyKeyPress(event)">
-                            <button id="btnQuickSend" onclick="kirimBalasanLangsung()" 
-                                    class="btn-primary px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1 min-w-[75px]">
+                            <input type="text" id="quickReplyMessage" placeholder="Ketik balasan Anda..." class="input-field flex-grow p-3 rounded-xl text-xs text-slate-200 bg-black/40" onkeypress="handleQuickReplyKeyPress(event)">
+                            <button id="btnQuickSend" onclick="kirimBalasanLangsung()" class="btn-primary px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1 min-w-[75px]">
                                 <i class="fa-solid fa-paper-plane"></i> Kirim
                             </button>
                         </div>
