@@ -282,6 +282,43 @@ function filterKontak() {
     renderKontak(hasilFilter);
 }
 
+// ================= FITUR UPGRADE: PENCARIAN KONTAK CEPAT PADA FORM KIRIM =================
+function cariKontakCepatForm() {
+    const keyword = document.getElementById("cariKontakForm").value.toLowerCase().trim();
+    const select = document.getElementById("kontakSelect");
+    if (!select) return;
+
+    // Jika kolom pencarian kosong, tampilkan semua daftar kontak seperti biasa
+    if (keyword === "") {
+        renderKontak();
+        return;
+    }
+
+    // Filter array kontak lokal berdasarkan nama atau nomor yang cocok dengan keyword
+    const hasilSaring = kontak.filter(k => 
+        k.nama.toLowerCase().includes(keyword) || 
+        k.nomor.toString().includes(keyword)
+    );
+
+    // Render ulang isi select option hanya dengan data yang lolos filter pencarian
+    select.innerHTML = `<option value="">-- Hasil Pencarian (${hasilSaring.length}) --</option>`;
+    
+    hasilSaring.forEach((k) => {
+        // Ambil index asli dari array utama agar sinkronisasi isiNomor() tidak rusak
+        const indexAsli = kontak.findIndex(item => item.id === k.id);
+        let opt = document.createElement("option");
+        opt.value = indexAsli;
+        opt.text = `${k.nama} (${k.nomor})`;
+        select.appendChild(opt);
+    });
+
+    // Otomatis pilih baris pertama jika hasil pencarian hanya ada 1 kontak agar lebih cepat
+    if (hasilSaring.length === 1) {
+        select.selectedIndex = 1;
+        isiNomor();
+    }
+}
+
 function tambahKontak() {
     let n = document.getElementById("namaKontak").value.trim();
     let num = document.getElementById("nomorKontak").value.trim();
@@ -436,29 +473,37 @@ async function kirim() {
             throw new Error("Gagal Kirim");
         }
 
-    } catch (err) {
+        } catch (err) {
         console.error(err);
         st.innerText = "❌ Terjadi kesalahan pengiriman.";
         statusLog = "❌ Gagal";
     } finally {
         bt.disabled = false;
         
-        // Simpan Log Pengiriman ke Firebase secara otomatis
+        // PANDUAN BARU: Memaksa format waktu seragam agar balon chat kanan tidak crash
         const sekarang = new Date();
-        const opsiWaktu = { 
-            day: '2-digit', month: '2-digit', year: 'numeric', 
-            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false 
-        };
-        const stringWaktu = sekarang.toLocaleString('id-ID', opsiWaktu).replace(/\//g, '-');
+        const pad = (num) => String(num).padStart(2, '0');
+        
+        const tanggal = pad(sekarang.getDate());
+        const bulan = pad(sekarang.getMonth() + 1);
+        const tahun = sekarang.getFullYear();
+        const jam = pad(sekarang.getHours());
+        const menit = pad(sekarang.getMinutes());
+        const detik = pad(sekarang.getSeconds());
+        
+        // Menghasilkan format standar: "17-06-2026 15:30:22"
+        const stringWaktuFix = `${tanggal}-${bulan}-${tahun} ${jam}:${menit}:${detik}`;
 
+        // Simpan Log Pengiriman ke Firebase secara otomatis
         logRef.push({
-            waktu: stringWaktu,
+            waktu: stringWaktuFix,
             tujuan: no,
             pesan: pFinal,
             status: statusLog
         }).catch(e => console.error("Gagal mencatat log ke cloud:", e));
     }
 }
+
 
 // Fungsi membersihkan seluruh data riwayat pesan di Firebase
 function hapusSemuaLog() {
