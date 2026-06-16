@@ -61,19 +61,23 @@ logRef.on("value", (snapshot) => {
     // Simpan data lama untuk komparasi deteksi chat masuk baru
     const dataLamaJumlah = Object.keys(semuaLogData).reduce((acc, curr) => acc + semuaLogData[curr].length, 0);
     
-    semuaLogData = {}; // Reset container penampung data lokal lokal
+    semuaLogData = {}; // Reset container penampung data lokal
 
     if (!data) {
         listContainer.innerHTML = `<div class="p-4 text-center text-slate-500 italic text-xs">Belum ada histori obrolan.</div>`;
         return;
     }
 
-    // 1. KELOMPOKKAN PESAN BERDASARKAN DIGIT ANGKA NOMOR HP (SENDER ATAU RECEIVER)
+    // 1. KELOMPOKKAN PESAN BERDASARKAN NOMOR HP (SENDER ATAU RECEIVER)
     Object.keys(data).forEach(key => {
         const item = data[key];
         if (!item.tujuan) return;
-        const nomorHP = item.tujuan.replace(/\D/g, ''); // Proteksi ambil karakter angka saja
         
+        // Ambil hanya karakter angka saja dari properti 'tujuan'
+        let nomorHP = item.tujuan.toString().replace(/\D/g, ''); 
+        
+        if (!nomorHP) return; // Lewati jika nomor kosong
+
         if (!semuaLogData[nomorHP]) {
             semuaLogData[nomorHP] = [];
         }
@@ -88,7 +92,7 @@ logRef.on("value", (snapshot) => {
         const semuaKunci = Object.keys(data);
         const barisTerakhirGlobal = data[semuaKunci[semuaKunci.length - 1]];
         
-        if (barisTerakhirGlobal && (barisTerakhirGlobal.status.includes("📥") || barisTerakhirGlobal.status === "📥 PESAN MASUK")) {
+        if (barisTerakhirGlobal && barisTerakhirGlobal.status && (barisTerakhirGlobal.status.includes("📥") || barisTerakhirGlobal.status === "📥 PESAN MASUK")) {
             mainkanNotifikasi(barisTerakhirGlobal.tujuan, barisTerakhirGlobal.pesan);
         }
     }
@@ -98,17 +102,20 @@ logRef.on("value", (snapshot) => {
         setTimeout(() => { aplikasiSiapNotif = true; }, 2000);
     }
 
-    // 2. RENDER DAFTAR KOTAK MASUK DI PANEL SEBELAH KIRI
+    // 2. RENDER DAFTAR KOTAK MASUK DI PANEL SEBELAH KIRI (MEMASTIKAN PESAN KELUAR & MASUK MUNCUL)
     Object.keys(semuaLogData).forEach(nomor => {
         const historiPesan = semuaLogData[nomor];
+        if (!historiPesan || historiPesan.length === 0) return;
+
         const pesanTerakhir = historiPesan[historiPesan.length - 1]; // Mengambil baris pesan paling baru
         
         // Proses pencarian nama kontak di database internal
-        const kontakDitemukan = kontak.find(k => k.nomor.replace(/\D/g, '') === nomor);
+        const kontakDitemukan = kontak.find(k => k.nomor.toString().replace(/\D/g, '') === nomor);
         const namaTampilan = kontakDitemukan ? kontakDitemukan.nama : `+${nomor}`;
 
         // Deteksi arah indikator pesan terakhir (Masuk atau Keluar)
-        const isPesanMasuk = pesanTerakhir.status.includes("📥") || pesanTerakhir.status === "📥 PESAN MASUK";
+        // Jika status mengandung "📥", berarti pesan masuk. Jika tidak, itu adalah pesan keluar Anda (Berhasil/Gagal)
+        const isPesanMasuk = pesanTerakhir.status && (pesanTerakhir.status.includes("📥") || pesanTerakhir.status === "📥 PESAN MASUK");
         
         const divItem = document.createElement("div");
         divItem.className = `p-3 flex flex-col gap-1 cursor-pointer transition-colors hover:bg-white/5 ${nomorChatAktif === nomor ? 'bg-white/10 hover:bg-white/10' : ''}`;
@@ -117,10 +124,10 @@ logRef.on("value", (snapshot) => {
         divItem.onclick = () => bukaRuangChat(nomor, namaTampilan);
 
         // Memotong tampilan jam dari string format waktu asli (misal "28-05-2026 17:06:26" diambil "17:06")
-        let jamSaja = "";
+        let jamSaja = "--:--";
         if (pesanTerakhir.waktu && pesanTerakhir.waktu.includes(" ")) {
             const partWaktu = pesanTerakhir.waktu.split(" ")[1];
-            jamSaja = partWaktu.substring(0, 5);
+            if (partWaktu) jamSaja = partWaktu.substring(0, 5);
         }
 
         divItem.innerHTML = `
@@ -141,6 +148,7 @@ logRef.on("value", (snapshot) => {
         renderBalonChat(nomorChatAktif);
     }
 });
+
 
 // FUNGSI UNTUK MERENDER GELEMBUNG BALON CHAT (BUBBLE CHAT)
 function renderBalonChat(nomor) {
