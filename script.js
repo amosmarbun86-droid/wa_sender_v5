@@ -16,12 +16,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const kontakRef = db.ref("kontak");
-const logRef = db.ref("logs"); 
+const logRef = db.ref("logs"); // Reference untuk menyimpan riwayat pesan masuk dan keluar
 
 // Variabel lokal penyimpan data kontak yang sinkron dengan Firebase
 let kontak = [];
 
-// Variabel global baru untuk mengelola state tampilan room chat interaktif
+// Variabel global untuk mengelola state tampilan room chat interaktif
 let nomorChatAktif = null;
 let semuaLogData = {};
 
@@ -30,7 +30,7 @@ let aplikasiSiapNotif = false;
 const audioNotif = new Audio("https://assets.mixkit.co/active_storage/sfx/2357/2357-84.wav");
 audioNotif.volume = 0.7;
 
-// Mendengarkan perubahan data secara langsung dari Firebase Realtime Server
+// Mendengarkan perubahan data secara langsung dari Firebase Realtime Server (Data Kontak)
 kontakRef.on("value", (snapshot) => {
     const data = snapshot.val();
     kontak = [];
@@ -52,7 +52,7 @@ kontakRef.on("value", (snapshot) => {
     }
 });
 
-// ================= MUTASI LOGIKA SEKSI RIWAYAT MENJADI ROOM CHAT INTERAKTIF =================
+// ================= LOGIKA UTAMA ROOM CHAT INTERAKTIF & LOGS =================
 logRef.on("value", (snapshot) => {
     const data = snapshot.val();
     const listContainer = document.getElementById("chatListContainer");
@@ -184,7 +184,7 @@ function renderBalonChat(nomor) {
     }, 100);
 }
 
-// ================= 🔐 SISTERM LOGIN FIREBASE AUTHENTICATION =================
+// ================= 🔐 SISTEM LOGIN FIREBASE AUTHENTICATION =================
 function checkAuth() {
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
@@ -212,6 +212,17 @@ function handleLogin() {
       });
 }
 
+// Fungsi dekripsi bawaan _0x dari file dasar Anda untuk parsing pengamanan teks
+function _0xdecode(str) {
+    try {
+        return decodeURIComponent(atob(str).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    } catch(e) {
+        return str;
+    }
+}
+
 function handleLogout() {
     if (confirm("Apakah Anda yakin ingin keluar dari sistem?")) {
         firebase.auth().signOut().catch((error) => {
@@ -220,7 +231,7 @@ function handleLogout() {
     }
 }
 
-// ================= CONTACT SYSTEM (FIREBASE INTEGRATED) =================
+// ================= MANAGEMENT DATABASE KONTAK SYSTEM =================
 function renderKontak(kontakFilter = null) {
     const select = document.getElementById("kontakSelect");
     if (!select) return;
@@ -237,7 +248,6 @@ function renderKontak(kontakFilter = null) {
     });
 }
 
-// ================= FITUR FINAL: LOGIKA PENCARIAN KONTAK CEPAT FORM KIRIM =================
 function cariKontakCepatForm() {
     const keyword = document.getElementById("cariKontakForm").value.toLowerCase().trim();
     if (keyword === "") {
@@ -335,7 +345,7 @@ function importCSV() {
     r.readAsText(f);
 }
 
-// ================= MEDIA & SEND SYSTEM =================
+// ================= MEDIA UPLOAD & PROSES API FONNTE SEND =================
 const fInput = document.getElementById("file");
 if (fInput) {
     fInput.addEventListener("change", function() {
@@ -357,7 +367,6 @@ async function kirim() {
     const bt = document.getElementById("btnKirim");
     const no = document.getElementById("nomor").value.trim();
     const ps = document.getElementById("pesan").value.trim();
-    const fl = fInput ? fInput.files[0] : null;
 
     if (!no) return alert("Nomor tujuan wajib diisi!");
 
@@ -373,6 +382,7 @@ async function kirim() {
     let statusLog = "❌ Gagal"; 
 
     try {
+        const fl = fInput ? fInput.files[0] : null;
         if (fl) {
             let fd = new FormData();
             fd.append("file", fl);
@@ -389,7 +399,7 @@ async function kirim() {
         
         st.innerText = "📤 Mengirim pesan ke WhatsApp...";
         let bdy = { target: no, message: msgFull };
-        if (upOk) { bdy.url = mUrl; bdy.filename = fl.name; }
+        if (upOk && fl) { bdy.url = mUrl; bdy.filename = fl.name; }
 
         let res = await fetch("https://api.fonnte.com/send", {
             method: "POST",
@@ -422,12 +432,11 @@ async function kirim() {
     } finally {
         bt.disabled = false;
         
-        // FIX FINAL: Penyeragaman format waktu pencatatan log dengan strip (-) agar gelembung chat tidak crash
         const sekarang = new Date();
         const pad = (num) => String(num).padStart(2, '0');
         const tanggal = pad(sekarang.getDate());
         const bulan = pad(sekarang.getMonth() + 1);
-        const tahun = sekarang.getFullYear();
+        const tahun = Bird = sekarang.getFullYear();
         const jam = pad(sekarang.getHours());
         const menit = pad(sekarang.getMinutes());
         const detik = pad(sekarang.getSeconds());
@@ -449,7 +458,7 @@ function hapusSemuaLog() {
     }
 }
 
-// ================= FITUR TAMBAHAN: BALAS LANGSUNG & KONTROL MOBILE ===========================
+// ================= RESPONSIVE MOBILE TOGGLE & QUICK REPLY CHAT ROOM ===========================
 function bukaRuangChat(nomor, nama) {
     nomorChatAktif = nomor;
     
@@ -464,6 +473,16 @@ function bukaRuangChat(nomor, nama) {
     if (replyArea) replyArea.classList.remove("hidden");
 
     renderBalonChat(nomor);
+
+    // KONTROL RESPONSIVE MOBILE VIEWPORT (Sembunyikan Panel List Kiri, Lebarkan Bubble Chat Kanan)
+    const leftPanel = document.getElementById("leftChatPanel");
+    const rightPanel = document.getElementById("rightChatPanel");
+    if (leftPanel && rightPanel) {
+        leftPanel.classList.add("hidden");
+        leftPanel.classList.remove("col-span-5");
+        rightPanel.classList.remove("hidden", "col-span-7");
+        rightPanel.classList.add("col-span-12");
+    }
 
     if (window.innerWidth < 768) {
         setTimeout(() => {
@@ -488,6 +507,16 @@ function kembaliKeDaftarChat() {
                 Klik salah satu daftar chat di sebelah kiri untuk melihat detail histori pesan masuk dan balasan.
             </div>
         `;
+    }
+
+    // REVERSE VIEWPORT (Tampilkan Kembali Panel List Kiri Untuk Mobile Screen)
+    const leftPanel = document.getElementById("leftChatPanel");
+    const rightPanel = document.getElementById("rightChatPanel");
+    if (leftPanel && rightPanel) {
+        leftPanel.classList.remove("hidden");
+        leftPanel.classList.add("col-span-5");
+        rightPanel.classList.add("hidden", "lg:flex", "col-span-7");
+        rightPanel.classList.remove("col-span-12");
     }
 
     const listTitle = document.querySelector("#chatListContainer");
@@ -548,9 +577,9 @@ function manualRefreshChat() {
 
 function mainkanNotifikasi(nomor, pesan) {
     if (audioNotif) {
-        audioNotif.play().catch(err => console.log("Gagal memutar audio di APK:", err));
+        audioNotif.play().catch(err => console.log("Gagal memutar audio notifikasi:", err));
     }
 }
 
-// Jalankan pengecekan status login terintegrasi Firebase Auth
+// Jalankan sistem otentikasi saat halaman diakses
 checkAuth();
