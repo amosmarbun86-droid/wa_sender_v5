@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
     <link rel="stylesheet" href="style.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -147,9 +146,9 @@
             </div>
 
             <div class="lg:col-span-7 glass-card rounded-3xl overflow-hidden flex flex-col h-[755px] border border-white/10">
-                <div class="grid grid-cols-12 h-full min-h-0">
+                <div class="flex flex-col lg:grid lg:grid-cols-12 h-full min-h-0 relative">
                     
-                    <div class="col-span-5 border-r border-white/5 flex flex-col h-full bg-black/10">
+                    <div id="leftChatPanel" class="w-full lg:col-span-5 border-r border-white/5 flex flex-col h-full bg-black/10">
                         <div class="p-3 border-b border-white/5 flex flex-col gap-2 bg-black/20">
                             <div class="flex justify-between items-center">
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
@@ -175,7 +174,7 @@
                         </div>
                     </div>
 
-                    <div class="col-span-7 flex flex-col h-full bg-slate-900/40 relative">
+                    <div id="rightChatPanel" class="hidden lg:flex w-full lg:col-span-7 flex-col h-full bg-slate-900/40 relative">
                         
                         <div class="p-3 bg-black/20 border-b border-white/5 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md">
                             <div class="flex flex-col min-w-0">
