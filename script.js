@@ -282,6 +282,20 @@ function filterKontak() {
     renderKontak(hasilFilter);
 }
 
+// Penanganan file yang dipilih dari kolom input chat room
+function handleChatFileSelect(input) {
+    if (!input.files) return;
+    
+    Array.from(input.files).forEach(newFile => {
+        const sudahAda = selectedFiles.some(f => f.name === newFile.name && f.size === newFile.size);
+        if (!alreadyExists) selectedFiles.push(newFile);
+    });
+    
+    input.value = ""; 
+    renderPreviewGrid(); 
+    document.getElementById("quickReplyMessage").placeholder = `📎 ${selectedFiles.length} file siap dikirim...`;
+}
+
 function tambahKontak() {
     let n = document.getElementById("namaKontak").value.trim();
     let num = document.getElementById("nomorKontak").value.trim();
@@ -468,6 +482,7 @@ function buatTimestamp() {
     return `${p(now.getDate())}-${p(now.getMonth()+1)}-${now.getFullYear()} ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
 }
 
+// FUNGSI UTAMA KIRIM (FIX MULTI-FILE & ANTIDUPLIKAT STATE)
 async function kirim() {
     const st = document.getElementById("status");
     const bt = document.getElementById("btnKirim");
@@ -476,67 +491,67 @@ async function kirim() {
 
     if (!no) return alert("Nomor tujuan wajib diisi!");
 
-    bt.disabled = true;
+    if (bt) bt.disabled = true;
 
     const iK    = document.getElementById("kontakSelect").value;
     const sapa  = (iK !== "" && kontak[iK]) ? kontak[iK].nama : "Bapak/Ibu";
     const pFinal = ps.replace(/{{nama}}/g, sapa);
 
-    // ── Kasus A: Tidak ada file dipilih — kirim teks saja ──────────────────
-    if (selectedFiles.length === 0) {
-        st.innerText = "📤 Mengirim pesan...";
+    // Kunci array ke variabel lokal agar aman dari interupsi fungsi luar
+    const filesKirim = [...selectedFiles];
+
+    // ── Kasus A: Tidak ada file dipilih ──────────────────
+    if (filesKirim.length === 0) {
+        if (st) st.innerText = "📤 Mengirim pesan...";
         let statusLog = "❌ Gagal";
         try {
             const d = await kirimKeFonnte(no, pFinal);
             if (d.status) {
-                st.innerText = "✅ Pesan berhasil dikirim!";
-                alert("Pesan Berhasil Terkirim!");
+                if (st) st.innerText = "✅ Pesan berhasil dikirim!";
                 statusLog = "✅ Berhasil";
             } else {
                 throw new Error("Fonnte menolak");
             }
         } catch(err) {
             console.error(err);
-            st.innerText = "❌ Terjadi kesalahan pengiriman.";
+            if (st) st.innerText = "❌ Terjadi kesalahan pengiriman.";
         } finally {
-            bt.disabled = false;
+            if (bt) bt.disabled = false;
             logRef.push({ waktu: buatTimestamp(), tujuan: no, pesan: pFinal, status: statusLog })
                   .catch(e => console.error("Gagal log:", e));
         }
         return;
     }
 
-    // ── Kasus B: Ada satu atau lebih file — upload lalu kirim per file ──────
-    const total    = selectedFiles.length;
+    // ── Kasus B: Ada file media (Proses berurutan diperbaiki dengan aman) ──────────────────
+    const total    = filesKirim.length;
     let berhasil   = 0;
     let gagal      = 0;
     let statusLog  = "❌ Gagal";
 
     for (let i = 0; i < total; i++) {
-        const file = selectedFiles[i];
-        st.innerText = `⏳ Upload file ${i + 1}/${total}: ${file.name}...`;
+        const file = filesKirim[i];
+        if (st) st.innerText = `⏳ Upload file ${i + 1}/${total}: ${file.name}...`;
 
         try {
             const mediaUrl = await uploadKeCloudinary(file);
 
             if (!mediaUrl) {
-                // Upload gagal → kirim sebagai teks saja
-                st.innerText = `📤 Kirim file ${i + 1}/${total} (teks fallback)...`;
+                if (st) st.innerText = `📤 Kirim file ${i + 1}/${total} (teks fallback)...`;
                 await kirimKeFonnte(no, pFinal);
                 gagal++;
                 continue;
             }
 
-            st.innerText = `📤 Kirim file ${i + 1}/${total} ke WhatsApp...`;
+            if (st) st.innerText = `📤 Kirim file ${i + 1}/${total} ke WhatsApp...`;
 
-            // Pesan teks hanya disertakan di file pertama supaya tidak berulang-ulang
+            // Teks pesan hanya disematkan pada file pertama supaya tidak berulang-ulang
             const pesanDikirim = (i === 0) ? pFinal : "";
             const d = await kirimKeFonnte(no, pesanDikirim, mediaUrl, file.name);
 
             if (d.status) {
                 berhasil++;
             } else {
-                // Fallback: kirim ulang pakai URL di body teks
                 await kirimKeFonnte(no, (i === 0 ? pFinal + "\n\n" : "") + mediaUrl);
                 gagal++;
             }
@@ -545,25 +560,27 @@ async function kirim() {
             gagal++;
         }
 
-        // Jeda kecil antar pengiriman agar tidak kena rate-limit
-        if (i < total - 1) await new Promise(r => setTimeout(r, 1200));
+        // JEDA 2 DETIK (2000ms): Solusi anti rate-limit Fonnte agar pengiriman multi-file tidak macet
+        if (i < total - 1) await new Promise(r => setTimeout(r, 2000));
     }
 
-    // ── Ringkasan hasil ──────────────────────────────────────────────────────
+    // ── Ringkasan Hasil Akhir ────────────────────────────────────────────────
     if (gagal === 0) {
-        st.innerText = `✅ Semua ${total} file berhasil dikirim!`;
-        alert(`✅ ${total} file berhasil dikirim ke ${no}!`);
+        if (st) st.innerText = `✅ Semua ${total} file berhasil dikirim!`;
         statusLog = "✅ Berhasil";
     } else if (berhasil > 0) {
-        st.innerText = `⚠️ ${berhasil} berhasil, ${gagal} gagal dari ${total} file.`;
-        alert(`⚠️ ${berhasil} file berhasil, ${gagal} file gagal.`);
+        if (st) st.innerText = `⚠️ ${berhasil} berhasil, ${gagal} gagal dari ${total} file.`;
         statusLog = "⚠️ Sebagian Berhasil";
     } else {
-        st.innerText = `❌ Semua ${total} file gagal dikirim.`;
+        if (st) st.innerText = `❌ Semua ${total} file gagal dikirim.`;
         statusLog = "❌ Gagal";
     }
 
-    bt.disabled = false;
+    if (bt) bt.disabled = false;
+    
+    // Reset file preview dan antrean media
+    hapusSemuaMedia();
+
     logRef.push({
         waktu   : buatTimestamp(),
         tujuan  : no,
@@ -635,7 +652,7 @@ function kembaliKeDaftarChat() {
     if (leftPanel && rightPanel) {
         leftPanel.classList.remove("hidden");
         leftPanel.classList.add("col-span-5");
-        rightPanel.classList.add("hidden", "lg:flex", "col-span-7");
+        rightPanel.add("hidden", "lg:flex", "col-span-7");
         rightPanel.classList.remove("col-span-12");
     }
 
@@ -643,6 +660,7 @@ function kembaliKeDaftarChat() {
     if (listTitle) listTitle.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
+// BALASAN LIVE CHAT MENDUKUNG UNGGAH GAMBAR/MEDIA
 async function kirimBalasanLangsung() {
     const inputBalas = document.getElementById("quickReplyMessage");
     const btnBalas = document.getElementById("btnQuickSend");
@@ -650,7 +668,7 @@ async function kirimBalasanLangsung() {
     if (!inputBalas || !nomorChatAktif) return;
     
     const pesanTeks = inputBalas.value.trim();
-    if (!pesanTeks) return alert("Tulis isi pesan balasan terlebih dahulu!");
+    if (!pesanTeks && selectedFiles.length === 0) return alert("Tulis isi pesan balasan atau pilih file terlebih dahulu!");
 
     btnBalas.disabled = true;
     btnBalas.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i>`;
@@ -658,15 +676,15 @@ async function kirimBalasanLangsung() {
     if (document.getElementById("pesan")) {
         document.getElementById("pesan").value = pesanTeks;
     }
-    
-    // Reset semua media yang dipilih sebelum kirim balasan cepat
-    selectedFiles = [];
-    renderPreviewGrid();
-    if (fInput) fInput.value = "";
+    if (document.getElementById("nomor")) {
+        document.getElementById("nomor").value = nomorChatAktif;
+    }
 
+    // Panggil fungsi kirim utama yang sudah diperbaiki
     await kirim();
 
     inputBalas.value = "";
+    inputBalas.placeholder = "Ketik balasan Anda...";
     btnBalas.disabled = false;
     btnBalas.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Kirim`;
     inputBalas.focus();
@@ -696,6 +714,20 @@ function mainkanNotifikasi(nomor, pesan) {
     if (audioNotif) {
         audioNotif.play().catch(err => console.log("Gagal memutar audio notifikasi:", err));
     }
+}
+
+// Penanganan khusus ketika file dipilih langsung dari dalam chat room panel
+function handleChatFileSelect(input) {
+    if (!input.files) return;
+    
+    Array.from(input.files).forEach(newFile => {
+        const sudahAda = selectedFiles.some(f => f.name === newFile.name && f.size === newFile.size);
+        if (!sudahAda) selectedFiles.push(newFile);
+    });
+    
+    input.value = "";
+    renderPreviewGrid();
+    document.getElementById("quickReplyMessage").placeholder = `📎 ${selectedFiles.length} file siap dikirim...`;
 }
 
 // Jalankan sistem otentikasi saat halaman diakses
