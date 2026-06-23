@@ -56,6 +56,16 @@ body {
     background: rgba(239, 68, 68, 0.2); 
 }
 
+/* ================= MULTI-FILE PREVIEW GRID ================= */
+#previewThumbs > div {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#previewThumbs > div:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5);
+}
+
 /* ================= CUSTOM SCROLLBAR UNTUK PANEL CHAT INTERAKTIF ================= */
 #chatListContainer::-webkit-scrollbar,
 #chatBubbleContainer::-webkit-scrollbar {
