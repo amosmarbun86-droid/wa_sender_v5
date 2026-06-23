@@ -345,21 +345,127 @@ function importCSV() {
     r.readAsText(f);
 }
 
-// ================= MEDIA UPLOAD & PROSES API FONNTE SEND =================
+// ================= MEDIA UPLOAD MULTI-FILE & PROSES API FONNTE SEND =================
+
+// Simpan daftar file yang dipilih user secara persisten (DataTransfer trick)
+let selectedFiles = [];
+
 const fInput = document.getElementById("file");
 if (fInput) {
     fInput.addEventListener("change", function() {
-        const file = this.files[0];
-        if (!file) return;
-        const url = URL.createObjectURL(file);
-        const img = document.getElementById("previewImg");
-        const vid = document.getElementById("previewVideo");
-        if (file.type.startsWith("image")) {
-            img.src = url; img.style.display = "block"; vid.style.display = "none";
-        } else {
-            vid.src = url; vid.style.display = "block"; img.style.display = "none";
-        }
+        // Tambahkan file baru ke array, hindari duplikat berdasarkan nama+ukuran
+        Array.from(this.files).forEach(newFile => {
+            const sudahAda = selectedFiles.some(f => f.name === newFile.name && f.size === newFile.size);
+            if (!sudahAda) selectedFiles.push(newFile);
+        });
+        // Reset nilai input supaya event "change" bisa terpicu lagi walau file sama dipilih ulang
+        this.value = "";
+        renderPreviewGrid();
     });
+}
+
+function renderPreviewGrid() {
+    const grid     = document.getElementById("previewGrid");
+    const thumbBox = document.getElementById("previewThumbs");
+    const countEl  = document.getElementById("previewCount");
+
+    if (!grid || !thumbBox) return;
+
+    if (selectedFiles.length === 0) {
+        grid.classList.add("hidden");
+        grid.classList.remove("flex");
+        thumbBox.innerHTML = "";
+        return;
+    }
+
+    grid.classList.remove("hidden");
+    grid.classList.add("flex");
+    countEl.textContent = `${selectedFiles.length} file dipilih`;
+    thumbBox.innerHTML = "";
+
+    selectedFiles.forEach((file, idx) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "relative group rounded-xl overflow-hidden border border-white/10 bg-black/30";
+        wrapper.style.aspectRatio = "1 / 1";
+
+        const objectUrl = URL.createObjectURL(file);
+
+        if (file.type.startsWith("image")) {
+            const img = document.createElement("img");
+            img.src = objectUrl;
+            img.className = "w-full h-full object-cover";
+            wrapper.appendChild(img);
+        } else {
+            const vid = document.createElement("video");
+            vid.src = objectUrl;
+            vid.className = "w-full h-full object-cover";
+            vid.muted = true;
+            vid.addEventListener("loadeddata", () => { vid.currentTime = 0.5; });
+            wrapper.appendChild(vid);
+            // Label video
+            const badge = document.createElement("div");
+            badge.className = "absolute bottom-1 left-1 text-[8px] bg-black/60 text-white px-1.5 py-0.5 rounded font-mono";
+            badge.textContent = "VIDEO";
+            wrapper.appendChild(badge);
+        }
+
+        // Nomor urut
+        const num = document.createElement("div");
+        num.className = "absolute top-1 left-1 w-4 h-4 rounded-full bg-green-500 text-white text-[8px] font-bold flex items-center justify-center shadow";
+        num.textContent = idx + 1;
+        wrapper.appendChild(num);
+
+        // Tombol hapus per item
+        const btnHapus = document.createElement("button");
+        btnHapus.type = "button";
+        btnHapus.className = "absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500/80 hover:bg-red-500 text-white text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow";
+        btnHapus.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+        btnHapus.onclick = (e) => {
+            e.stopPropagation();
+            selectedFiles.splice(idx, 1);
+            renderPreviewGrid();
+        };
+        wrapper.appendChild(btnHapus);
+
+        thumbBox.appendChild(wrapper);
+    });
+}
+
+function hapusSemuaMedia() {
+    selectedFiles = [];
+    renderPreviewGrid();
+}
+
+// Helper: upload satu file ke Cloudinary, return secure_url atau null
+async function uploadKeCloudinary(file) {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("upload_preset", UPLOAD_PRESET);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+        method: "POST",
+        body: fd
+    });
+    const data = await res.json();
+    return data.secure_url || null;
+}
+
+// Helper: kirim satu pesan (teks saja ATAU teks+media) ke Fonnte
+async function kirimKeFonnte(target, pesan, mediaUrl = null, namaFile = null) {
+    const body = { target, message: pesan };
+    if (mediaUrl) { body.url = mediaUrl; body.filename = namaFile || "media"; }
+    const res = await fetch("https://api.fonnte.com/send", {
+        method: "POST",
+        headers: { "Authorization": API_KEY_FONNTE, "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+    return res.json();
+}
+
+// Helper: timestamp lokal rapi
+function buatTimestamp() {
+    const now = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return `${p(now.getDate())}-${p(now.getMonth()+1)}-${now.getFullYear()} ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
 }
 
 async function kirim() {
@@ -371,85 +477,99 @@ async function kirim() {
     if (!no) return alert("Nomor tujuan wajib diisi!");
 
     bt.disabled = true;
-    st.innerText = "⏳ Sedang memproses media...";
 
-    let iK = document.getElementById("kontakSelect").value;
-    let sapa = (iK !== "" && kontak[iK]) ? kontak[iK].nama : "Bapak/Ibu";
-    let pFinal = ps.replace(/{{nama}}/g, sapa);
+    const iK    = document.getElementById("kontakSelect").value;
+    const sapa  = (iK !== "" && kontak[iK]) ? kontak[iK].nama : "Bapak/Ibu";
+    const pFinal = ps.replace(/{{nama}}/g, sapa);
 
-    let mUrl = "";
-    let upOk = false;
-    let statusLog = "❌ Gagal"; 
-
-    try {
-        const fl = fInput ? fInput.files[0] : null;
-        if (fl) {
-            let fd = new FormData();
-            fd.append("file", fl);
-            fd.append("upload_preset", UPLOAD_PRESET);
-            let up = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
-                method: "POST",
-                body: fd
-            });
-            let rC = await up.json();
-            if (rC.secure_url) { mUrl = rC.secure_url; upOk = true; }
+    // ── Kasus A: Tidak ada file dipilih — kirim teks saja ──────────────────
+    if (selectedFiles.length === 0) {
+        st.innerText = "📤 Mengirim pesan...";
+        let statusLog = "❌ Gagal";
+        try {
+            const d = await kirimKeFonnte(no, pFinal);
+            if (d.status) {
+                st.innerText = "✅ Pesan berhasil dikirim!";
+                alert("Pesan Berhasil Terkirim!");
+                statusLog = "✅ Berhasil";
+            } else {
+                throw new Error("Fonnte menolak");
+            }
+        } catch(err) {
+            console.error(err);
+            st.innerText = "❌ Terjadi kesalahan pengiriman.";
+        } finally {
+            bt.disabled = false;
+            logRef.push({ waktu: buatTimestamp(), tujuan: no, pesan: pFinal, status: statusLog })
+                  .catch(e => console.error("Gagal log:", e));
         }
-
-        let msgFull = upOk ? (pFinal + "\n\n" + mUrl) : pFinal;
-        
-        st.innerText = "📤 Mengirim pesan ke WhatsApp...";
-        let bdy = { target: no, message: msgFull };
-        if (upOk && fl) { bdy.url = mUrl; bdy.filename = fl.name; }
-
-        let res = await fetch("https://api.fonnte.com/send", {
-            method: "POST",
-            headers: { "Authorization": API_KEY_FONNTE, "Content-Type": "application/json" },
-            body: JSON.stringify(bdy)
-        });
-
-        let d = await res.json();
-
-        if ((!d.status || !upOk) && mUrl) {
-            await fetch("https://api.fonnte.com/send", {
-                method: "POST",
-                headers: { "Authorization": API_KEY_FONNTE, "Content-Type": "application/json" },
-                body: JSON.stringify({ target: no, message: pFinal + "\n\n" + mUrl })
-            });
-            st.innerText = "⚠️ Media tertunda, link terkirim.";
-            statusLog = "⚠️ Media Tertunda";
-        } else if (d.status) {
-            st.innerText = "✅ Pesan berhasil dikirim!";
-            alert("Pesan Berhasil Terkirim!");
-            statusLog = "✅ Berhasil";
-        } else {
-            throw new Error("Gagal Kirim");
-        }
-
-    } catch (err) {
-        console.error(err);
-        st.innerText = "❌ Terjadi kesalahan pengiriman.";
-        statusLog = "❌ Gagal";
-    } finally {
-        bt.disabled = false;
-        
-        const sekarang = new Date();
-        const pad = (num) => String(num).padStart(2, '0');
-        const tanggal = pad(sekarang.getDate());
-        const bulan = pad(sekarang.getMonth() + 1);
-        const tahun = Bird = sekarang.getFullYear();
-        const jam = pad(sekarang.getHours());
-        const menit = pad(sekarang.getMinutes());
-        const detik = pad(sekarang.getSeconds());
-        
-        const stringWaktuFix = `${tanggal}-${bulan}-${tahun} ${jam}:${menit}:${detik}`;
-
-        logRef.push({
-            waktu: stringWaktuFix,
-            tujuan: no,
-            pesan: pFinal,
-            status: statusLog
-        }).catch(e => console.error("Gagal mencatat log ke cloud:", e));
+        return;
     }
+
+    // ── Kasus B: Ada satu atau lebih file — upload lalu kirim per file ──────
+    const total    = selectedFiles.length;
+    let berhasil   = 0;
+    let gagal      = 0;
+    let statusLog  = "❌ Gagal";
+
+    for (let i = 0; i < total; i++) {
+        const file = selectedFiles[i];
+        st.innerText = `⏳ Upload file ${i + 1}/${total}: ${file.name}...`;
+
+        try {
+            const mediaUrl = await uploadKeCloudinary(file);
+
+            if (!mediaUrl) {
+                // Upload gagal → kirim sebagai teks saja
+                st.innerText = `📤 Kirim file ${i + 1}/${total} (teks fallback)...`;
+                await kirimKeFonnte(no, pFinal);
+                gagal++;
+                continue;
+            }
+
+            st.innerText = `📤 Kirim file ${i + 1}/${total} ke WhatsApp...`;
+
+            // Pesan teks hanya disertakan di file pertama supaya tidak berulang-ulang
+            const pesanDikirim = (i === 0) ? pFinal : "";
+            const d = await kirimKeFonnte(no, pesanDikirim, mediaUrl, file.name);
+
+            if (d.status) {
+                berhasil++;
+            } else {
+                // Fallback: kirim ulang pakai URL di body teks
+                await kirimKeFonnte(no, (i === 0 ? pFinal + "\n\n" : "") + mediaUrl);
+                gagal++;
+            }
+        } catch(err) {
+            console.error(`Error file ke-${i+1}:`, err);
+            gagal++;
+        }
+
+        // Jeda kecil antar pengiriman agar tidak kena rate-limit
+        if (i < total - 1) await new Promise(r => setTimeout(r, 1200));
+    }
+
+    // ── Ringkasan hasil ──────────────────────────────────────────────────────
+    if (gagal === 0) {
+        st.innerText = `✅ Semua ${total} file berhasil dikirim!`;
+        alert(`✅ ${total} file berhasil dikirim ke ${no}!`);
+        statusLog = "✅ Berhasil";
+    } else if (berhasil > 0) {
+        st.innerText = `⚠️ ${berhasil} berhasil, ${gagal} gagal dari ${total} file.`;
+        alert(`⚠️ ${berhasil} file berhasil, ${gagal} file gagal.`);
+        statusLog = "⚠️ Sebagian Berhasil";
+    } else {
+        st.innerText = `❌ Semua ${total} file gagal dikirim.`;
+        statusLog = "❌ Gagal";
+    }
+
+    bt.disabled = false;
+    logRef.push({
+        waktu   : buatTimestamp(),
+        tujuan  : no,
+        pesan   : pFinal + (total > 0 ? ` [${total} media]` : ""),
+        status  : statusLog
+    }).catch(e => console.error("Gagal log:", e));
 }
 
 function hapusSemuaLog() {
@@ -539,13 +659,10 @@ async function kirimBalasanLangsung() {
         document.getElementById("pesan").value = pesanTeks;
     }
     
-    if (fInput) {
-        fInput.value = "";
-        const img = document.getElementById("previewImg");
-        const vid = document.getElementById("previewVideo");
-        if(img) img.style.display = "none";
-        if(vid) vid.style.display = "none";
-    }
+    // Reset semua media yang dipilih sebelum kirim balasan cepat
+    selectedFiles = [];
+    renderPreviewGrid();
+    if (fInput) fInput.value = "";
 
     await kirim();
 
