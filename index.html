@@ -201,12 +201,23 @@
                             </div>
                         </div>
 
-                        <div id="quickReplyArea" class="hidden p-3 bg-white/5 border-t border-white/5 flex gap-2 items-center sticky bottom-0 z-10">
-                            <input type="text" id="quickReplyMessage" placeholder="Ketik balasan Anda..." class="input-field flex-grow p-3 rounded-xl text-xs text-slate-200 bg-black/40" onkeypress="handleQuickReplyKeyPress(event)">
-                            <button id="btnQuickSend" onclick="kirimBalasanLangsung()" class="btn-primary px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1 min-w-[75px]">
-                                <i class="fa-solid fa-paper-plane"></i> Kirim
-                            </button>
+                        <!-- FITUR TAMBAH FILE WHATSAPP PADA QUICK REPLY AREA -->
+                        <div id="quickReplyArea" class="hidden p-3 bg-white/5 border-t border-white/5 flex flex-col gap-2 sticky bottom-0 z-10">
+                            <div class="flex gap-2 items-center w-full">
+                                <!-- Tombol Tambah File (Paperclip) -->
+                                <label class="bg-white/5 hover:bg-white/10 border border-white/10 p-3 rounded-xl cursor-pointer text-slate-300 transition-colors flex items-center justify-center">
+                                    <i class="fa-solid fa-paperclip text-xs"></i>
+                                    <input type="file" id="chatFileInput" accept="image/*,video/*" multiple class="hidden" onchange="handleChatFileSelect(this)">
+                                </label>
+
+                                <input type="text" id="quickReplyMessage" placeholder="Ketik balasan Anda..." class="input-field flex-grow p-3 rounded-xl text-xs text-slate-200 bg-black/40" onkeypress="handleQuickReplyKeyPress(event)">
+                                
+                                <button id="btnQuickSend" onclick="kirimBalasanLangsung()" class="btn-primary px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1 min-w-[75px]">
+                                    <i class="fa-solid fa-paper-plane"></i> Kirim
+                                </button>
+                            </div>
                         </div>
+
                     </div>
 
                 </div>
